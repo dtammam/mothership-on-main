@@ -55,7 +55,7 @@ Feel free to submit a change! If you can make progress on making all of the elem
 
 ## License
 
-MIT
+[MIT](license)
 
 ## Credits
 
