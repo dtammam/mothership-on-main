@@ -1,0 +1,217 @@
+<!--
+    🛸 Mothership on Main
+    Mothership on Main is a Chromium-enabled extension that replaces your home and new tab page with an efficient view
+    Author: Dean Tammam
+    Date: 4/20/2023
+-->
+
+<!DOCTYPE html>
+<html>
+    <head>
+    <!-- Define the basic structure of a webpage, including the head section for metadata and body section for content with a "dark mode" class attribute. -->
+        <meta charset="UTF-8">
+        <link rel="stylesheet" type="text/css" href="css/style.css">
+        <link rel="icon" type="image/x-icon" href="images/icon.ico">
+        <title>Mothership on Main</title>
+    </head>
+    <body class="dark mode"></body>
+
+    <!-- Header of the page -->
+    <h1>🛸 Mothership on Main</h1>
+
+    <!-- Search form with a dropdown -->
+    <form id="search-form" action="" method="get" target ="_blank">
+        <!-- Display a rotation of recent manually curated feedback on each pageload -->
+        <select id="search-engine">
+            <option value="google">Google</option>
+            <option value="bing">Bing</option>
+            <option value="duckduckgo">DuckDuckGo</option>
+            <option value="microsoft">Microsoft</option>
+            <option value="wiki">Wikipedia</option>
+        </select>
+        <input id="search-input" type="text" name="q" required>
+        <button type="submit">Search</button>
+    </form>
+
+    <!-- Display rotating feedback -->
+    <h2>Feedback to Consider</h2>
+    <p id="text-container"></p>
+
+    <!-- Load and run the JavaScript file for interactivity -->
+    <script src="js/script.js"></script>
+
+    <!-- Links that are regularly accessed for day-to-day processes -->
+    <h2>Primary</h2>
+        <div class="section">
+            <!-- Row 1 -->
+            <a class="link" href="https://www.google.com/">
+                <img src="https://www.google.com/favicon.ico" width="16" height="16">
+                 Replace Me
+            </a>
+            <a class="link" href="https://www.google.com/">
+                <img src="https://www.google.com/favicon.ico" width="16" height="16">
+                 Replace Me
+            </a>
+            <a class="link" href="https://www.google.com/">
+                <img src="https://www.google.com/favicon.ico" width="16" height="16">
+                 Replace Me
+            </a>
+            <a class="link" href="https://www.google.com/">
+                <img src="https://www.google.com/favicon.ico" width="16" height="16">
+                 Replace Me
+            </a>
+
+            <!-- Row 2 -->
+            <a class="link" href="https://www.google.com/">
+                <img src="https://www.google.com/favicon.ico" width="16" height="16">
+                 Replace Me
+            </a>
+            <a class="link" href="https://www.google.com/">
+                <img src="https://www.google.com/favicon.ico" width="16" height="16">
+                 Replace Me
+            </a>
+            <a class="link" href="https://www.google.com/">
+                <img src="https://www.google.com/favicon.ico" width="16" height="16">
+                 Replace Me
+            </a>
+            <a class="link" href="https://www.google.com/">
+                <img src="https://www.google.com/favicon.ico" width="16" height="16">
+                 Replace Me
+            </a>
+
+            <!-- Row 3 -->
+            <a class="link" href="https://www.google.com/">
+                <img src="https://www.google.com/favicon.ico" width="16" height="16">
+                 Replace Me
+            </a>
+            <a class="link" href="https://www.google.com/">
+                <img src="https://www.google.com/favicon.ico" width="16" height="16">
+                 Replace Me
+            </a>
+            <a class="link" href="https://www.google.com/">
+                <img src="https://www.google.com/favicon.ico" width="16" height="16">
+                 Replace Me
+            </a>
+            <a class="link" href="https://www.google.com/">
+                <img src="https://www.google.com/favicon.ico" width="16" height="16">
+                 Replace Me
+            </a>
+
+            <!-- Row 4 -->     
+            <a class="link" href="https://www.google.com/">
+                <img src="https://www.google.com/favicon.ico" width="16" height="16">
+                 Replace Me
+            </a>
+            <a class="link" href="https://www.google.com/">
+                <img src="https://www.google.com/favicon.ico" width="16" height="16">
+                 Replace Me
+            </a>
+            <a class="link" href="https://www.google.com/">
+                <img src="https://www.google.com/favicon.ico" width="16" height="16">
+                 Replace Me
+            </a>
+            <a class="link" href="https://www.google.com/">
+                <img src="https://www.google.com/favicon.ico" width="16" height="16">
+                 Replace Me
+            </a>
+        </div>
+
+    <!-- Links to less frequently used pages that are still important -->
+    <h2>Secondary</h2>
+        <div class="section">
+            <!-- Row 5 -->   
+            <a class="link" href="https://www.google.com/">
+                <img src="https://www.google.com/favicon.ico" width="16" height="16">
+                 Replace Me
+            </a>
+            <a class="link" href="https://www.google.com/">
+                <img src="https://www.google.com/favicon.ico" width="16" height="16">
+                 Replace Me
+            </a>
+            <a class="link" href="https://www.google.com/">
+                <img src="https://www.google.com/favicon.ico" width="16" height="16">
+                 Replace Me
+            </a>
+            <a class="link" href="https://www.google.com/">
+                <img src="https://www.google.com/favicon.ico" width="16" height="16">
+                 Replace Me
+            </a>
+            
+            <!-- Row 6 -->   
+            <a class="link" href="https://www.google.com/">
+                <img src="https://www.google.com/favicon.ico" width="16" height="16">
+                 Replace Me
+            </a>
+            <a class="link" href="https://www.google.com/">
+                <img src="https://www.google.com/favicon.ico" width="16" height="16">
+                 Replace Me
+            </a>
+            <a class="link" href="https://www.google.com/">
+                <img src="https://www.google.com/favicon.ico" width="16" height="16">
+                 Replace Me
+            </a>
+            <a class="link" href="https://www.google.com/">
+                <img src="https://www.google.com/favicon.ico" width="16" height="16">
+                 Replace Me
+            </a>
+            
+            <!-- Row 7 -->   
+            <a class="link" href="https://www.google.com/">
+                <img src="https://www.google.com/favicon.ico" width="16" height="16">
+                 Replace Me
+            </a>
+            <a class="link" href="https://www.google.com/">
+                <img src="https://www.google.com/favicon.ico" width="16" height="16">
+                 Replace Me
+            </a>
+            <a class="link" href="https://www.google.com/">
+                <img src="https://www.google.com/favicon.ico" width="16" height="16">
+                 Replace Me
+            </a>
+            <a class="link" href="https://www.google.com/">
+                <img src="https://www.google.com/favicon.ico" width="16" height="16">
+                 Replace Me
+            </a>
+            
+            <!-- Row 8 -->   
+            <a class="link" href="https://www.google.com/">
+                <img src="https://www.google.com/favicon.ico" width="16" height="16">
+                 Replace Me
+            </a>
+            <a class="link" href="https://www.google.com/">
+                <img src="https://www.google.com/favicon.ico" width="16" height="16">
+                 Replace Me
+            </a>
+            <a class="link" href="https://www.google.com/">
+                <img src="https://www.google.com/favicon.ico" width="16" height="16">
+                 Replace Me
+            </a>
+            <a class="link" href="https://www.google.com/">
+                <img src="https://www.google.com/favicon.ico" width="16" height="16">
+                 Replace Me
+            </a>
+        </div>
+
+    <!-- Links that are important now but first to swap out -->
+    <h2>Tertiary</h2>
+        <div class="section">
+            <!-- Row 9 -->   
+            <a class="link" href="https://www.youtube.com/watch?v=r2iSxZGYvCs">
+                <img src="https://www.youtube.com/favicon.ico" width="16" height="16">
+                 Fireplace
+            </a>
+            <a class="link" href="https://www.youtube.com/watch?v=w6P-AaGwTMM">
+                <img src="https://www.youtube.com/favicon.ico" width="16" height="16">
+                 San Diego Pacific Beach
+            </a>
+            <a class="link" href="https://www.youtube.com/watch?v=jh_KFTYJnDo">
+                <img src="https://www.youtube.com/favicon.ico" width="16" height="16">
+                 Snowfall on a Lake
+            </a>
+            <a class="link" href="https://www.youtube.com/watch?v=BoCLdG2x594">
+                <img src="https://www.youtube.com/favicon.ico" width="16" height="16">
+                 Heavy Rain on Grass
+            </a>
+        </div>
+    </body>
+</html>

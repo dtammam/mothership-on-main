@@ -1,0 +1,83 @@
+/*
+    🛸 Mothership on Main Styling
+    All styling for this local home page to replace core bookmarks
+    Author: Dean Tammam
+    Date: 4/20/2023
+*/
+
+/* Overall body styling */
+body {
+    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    text-align: center;
+    background-repeat: cover;
+    background-repeat: no-repeat;
+}
+
+/* Search provider dropdown styling */
+form {
+    margin: 10px;
+    text-align: center;
+}
+
+/* Search form styling */
+input[type="text"] {
+    border: 1px solid #555;
+    border-radius: 5px;
+    padding: 10px;
+    width: 33%;
+    height: 1px;
+}
+
+/* Button styling, nice and simple */
+button[type="submit"] {
+    background-color: #555;
+}
+
+/* Link styling to keep things centered and clean */
+.link {
+    color: #FFFFFF;
+    background-color: #444;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-shadow: 2px 2px 5px rgba(255, 255, 255, 0.1);
+    display: inline-block;
+    flex-basis: calc(20% - 20px);
+    margin: 10px;
+    padding: 20px;
+    text-decoration: none;
+}
+
+/* Stylize URL on hover */
+.link:hover {
+    background-color: #555;
+}
+
+/* Section styling to provide spacing and four links per line */
+.section {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 20px 0
+}
+
+/* Give the headers a little breathing room */
+h2 {
+    padding: 3px;
+}
+
+/* Make the feedback italicized */
+#text-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+
+    font-style: italic;
+    font-size: larger;
+    font-style: bold;
+    background-color: #444;
+    border: 1px solid #ddd;
+    border-radius: 7px;
+    color:#FFFFFF;
+    width: 87.5%;
+    margin: 0 auto;
+}
