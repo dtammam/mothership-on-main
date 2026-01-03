@@ -19,7 +19,7 @@
     --radius: 18px;
     --radius-tight: 12px;
     --font-sans: "Bahnschrift", "Segoe UI", sans-serif;
-    --font-display: "Gabriola", "Times New Roman", serif;
+    --font-display: "Bahnschrift", "Segoe UI", sans-serif;
 }
 
 * {
@@ -50,8 +50,9 @@ body::before {
 .page {
     position: relative;
     z-index: 1;
-    padding: 32px 6vw 80px;
-    max-width: 1200px;
+    padding: 32px clamp(20px, 4vw, 64px) 80px;
+    max-width: min(1200px, 72vw);
+    width: 100%;
     margin: 0 auto;
 }
 
@@ -96,6 +97,12 @@ h3 {
     align-items: center;
     justify-content: space-between;
     gap: 20px;
+    flex-wrap: wrap;
+}
+
+.title-actions {
+    display: flex;
+    gap: 10px;
     flex-wrap: wrap;
 }
 
@@ -146,6 +153,7 @@ h3 {
     border: 1px solid var(--border);
     font-size: 16px;
     font-style: italic;
+    text-align: center;
     box-shadow: var(--shadow);
 }
 
@@ -153,6 +161,7 @@ h3 {
     display: flex;
     flex-direction: column;
     gap: 28px;
+    align-items: center;
 }
 
 .section {
@@ -161,11 +170,42 @@ h3 {
     padding: 18px 20px 22px;
     border: 1px solid var(--border);
     box-shadow: var(--shadow);
+    width: 100%;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.section-handle {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--muted);
+    cursor: grab;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.rearrange-mode .section-handle {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.section.dragging {
+    opacity: 0.5;
 }
 
 .links-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(clamp(160px, 18vw, 220px), 1fr));
+    grid-template-columns: repeat(var(--columns, 4), minmax(var(--min-card-width, 180px), 1fr));
     gap: 12px;
 }
 
@@ -180,6 +220,7 @@ h3 {
     color: var(--text);
     text-decoration: none;
     transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+    position: relative;
 }
 
 .link-card:hover {
@@ -198,6 +239,30 @@ h3 {
 .link-card span {
     flex: 1;
     font-size: 14px;
+}
+
+.link-remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(10, 12, 20, 0.9);
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.rearrange-mode .link-remove {
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .ghost-button,
@@ -237,6 +302,15 @@ button:hover,
     z-index: 2;
 }
 
+.settings-panel::after {
+    content: "";
+    position: sticky;
+    bottom: 0;
+    display: block;
+    height: 24px;
+    background: rgba(12, 14, 22, 0.96);
+}
+
 .settings-panel.open {
     transform: translateX(0);
 }
@@ -259,6 +333,29 @@ button:hover,
     gap: 12px;
     padding-top: 8px;
     border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.settings-footer {
+    margin-top: auto;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    position: sticky;
+    bottom: 0;
+    padding: 14px 0 18px;
+    margin-bottom: -20px;
+    background: rgba(12, 14, 22, 0.96);
+    box-shadow: 0 -18px 28px rgba(12, 14, 22, 0.96);
+    flex-wrap: wrap;
+}
+
+.settings-signature {
+    width: 100%;
+    margin: 8px 0 0;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
 }
 
 .sync-row {
@@ -312,6 +409,57 @@ button:hover,
     min-width: 0;
 }
 
+.links-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.links-section {
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-tight);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.links-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.links-section h4 {
+    margin: 0;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+}
+
+.section-remove {
+    padding: 4px 10px;
+    font-size: 12px;
+    line-height: 1;
+}
+
+.section-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 12px;
+}
+
+.rearrange .link-row {
+    cursor: grab;
+}
+
+.link-row.dragging {
+    opacity: 0.5;
+}
+
 .editor-row input[type="text"],
 .editor-row input[type="url"] {
     width: 100%;
@@ -326,6 +474,22 @@ button:hover,
 .editor-row input[type="file"] {
     color: var(--muted);
     width: 100%;
+}
+
+.settings-panel input[type="text"],
+.settings-panel input[type="url"],
+.settings-panel input[type="number"] {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: var(--radius-tight);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(10, 12, 20, 0.7);
+    color: var(--text);
+    font-size: 14px;
+}
+
+.settings-panel input[type="file"] {
+    display: none;
 }
 
 .icon-preview,
@@ -429,6 +593,47 @@ textarea {
     gap: 6px;
     font-size: 12px;
     letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.branding-field {
+    text-transform: none;
+    letter-spacing: 0.04em;
+    font-size: 11px;
+    color: var(--muted);
+}
+
+.file-field {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    border-radius: var(--radius-tight);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(10, 12, 20, 0.7);
+    cursor: pointer;
+    flex: 1 1 240px;
+}
+
+.file-button {
+    font-family: var(--font-sans);
+    padding: 8px 12px;
+    border-radius: var(--radius-tight);
+    border: 1px solid var(--border);
+    background: rgba(17, 20, 30, 0.88);
+    color: var(--text);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.file-button:hover {
+    border-color: var(--accent);
+}
+
+.file-name {
+    color: var(--muted);
+    font-size: 12px;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
 }
 

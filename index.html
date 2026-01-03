@@ -19,15 +19,18 @@
             <header class="masthead">
                 <div class="title-row">
                     <div>
-                        <p class="eyebrow">New tab command deck</p>
-                        <h1>Mothership on Main</h1>
+                        <p id="subtitle" class="eyebrow">Your favorite bookmark replacement tool</p>
+                        <h1 id="title">Mothership on Main</h1>
                     </div>
-                    <button id="settings-toggle" class="ghost-button" type="button">Customize</button>
+                    <div class="title-actions">
+                        <button id="rearrange-toggle" class="ghost-button" type="button">Rearrange</button>
+                        <button id="settings-toggle" class="ghost-button" type="button">Customize</button>
+                    </div>
                 </div>
 
                 <form id="search-form" action="" method="get" target="_blank">
                     <select id="search-engine" aria-label="Search engine"></select>
-                    <input id="search-input" type="text" name="q" placeholder="Search the universe" required>
+                    <input id="search-input" type="text" name="q" placeholder="Find what you're looking for" required>
                     <button type="submit">Search</button>
                 </form>
             </header>
@@ -56,24 +59,30 @@
             </div>
 
             <div class="settings-section">
-                <h3>Links</h3>
-                <div id="links-editor" class="editor-list"></div>
-                <button id="add-link" class="ghost-button" type="button">Add link</button>
-            </div>
-
-            <div class="settings-section">
-                <h3>Backgrounds</h3>
-                <div id="backgrounds-editor" class="editor-list"></div>
+                <h3>Branding</h3>
                 <div class="row">
-                    <input id="background-upload" type="file" accept="image/*" multiple>
-                    <button id="add-background-url" class="ghost-button" type="button">Add background URL</button>
+                    <label class="field branding-field">
+                        Header
+                        <input id="branding-title" type="text" placeholder="Mothership on Main">
+                    </label>
+                    <label class="field branding-field">
+                        Subheader
+                        <input id="branding-subtitle" type="text" placeholder="Your favorite bookmark replacement tool">
+                    </label>
                 </div>
             </div>
 
             <div class="settings-section">
-                <h3>Quotes</h3>
-                <textarea id="quotes-editor" rows="6" placeholder="One quote per line"></textarea>
-                <input id="quotes-upload" type="file" accept=".txt">
+                <h3>Config</h3>
+                <div class="row">
+                    <button id="export-config" class="ghost-button" type="button">Download config</button>
+                    <label class="file-field">
+                        <span class="file-button">Choose file</span>
+                        <span id="import-config-name" class="file-name">No file chosen</span>
+                        <input id="import-config" type="file" accept=".json">
+                    </label>
+                    <button id="reset-config" class="ghost-button" type="button">Reset defaults</button>
+                </div>
             </div>
 
             <div class="settings-section">
@@ -86,16 +95,61 @@
                         <select id="default-engine"></select>
                     </label>
                 </div>
-                <input id="search-upload" type="file" accept=".json">
+                <label class="file-field">
+                    <span class="file-button">Choose file</span>
+                    <span id="search-upload-name" class="file-name">No file chosen</span>
+                    <input id="search-upload" type="file" accept=".json">
+                </label>
             </div>
 
             <div class="settings-section">
-                <h3>Config</h3>
+                <h3>Layout</h3>
                 <div class="row">
-                    <button id="export-config" class="ghost-button" type="button">Download config</button>
-                    <input id="import-config" type="file" accept=".json">
-                    <button id="reset-config" class="ghost-button" type="button">Reset defaults</button>
+                    <label class="field">
+                        Max columns
+                        <input id="layout-max-columns" type="number" min="2" max="4" step="1">
+                    </label>
                 </div>
+            </div>
+
+            <div class="settings-section">
+                <h3>Backgrounds</h3>
+                <div id="backgrounds-editor" class="editor-list"></div>
+                <div class="row">
+                    <label class="file-field">
+                        <span class="file-button">Choose files</span>
+                        <span id="background-upload-name" class="file-name">No files chosen</span>
+                        <input id="background-upload" type="file" accept="image/*" multiple>
+                    </label>
+                    <button id="add-background-url" class="ghost-button" type="button">Add background URL</button>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h3>Links</h3>
+                <div id="links-editor" class="editor-list links-editor"></div>
+                <div class="row">
+                    <button id="add-link" class="ghost-button" type="button">Add link</button>
+                    <input id="new-section-name" type="text" placeholder="New category name">
+                    <button id="add-section" class="ghost-button" type="button">Add category</button>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h3>Quotes</h3>
+                <textarea id="quotes-editor" rows="6" placeholder="One quote per line"></textarea>
+                <label class="file-field">
+                    <span class="file-button">Choose file</span>
+                    <span id="quotes-upload-name" class="file-name">No file chosen</span>
+                    <input id="quotes-upload" type="file" accept=".txt">
+                </label>
+            </div>
+            <div class="settings-footer">
+                <button id="settings-cancel-bottom" class="ghost-button" type="button">Cancel</button>
+                <button id="settings-save-bottom" type="button">Save</button>
+                <p class="settings-signature">
+                    Created by Dean Tammam in partnership with Codex 5.2 using Windows Terminal and voice dictation.
+                </p>
             </div>
         </aside>
 

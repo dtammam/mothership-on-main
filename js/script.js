@@ -12,10 +12,12 @@ const SYNC_META_KEY = "mothershipSyncMeta";
 const FAVICON_CACHE_KEY = "mothershipFaviconCache";
 
 const fallbackConfig = {
+    branding: { title: "Mothership on Main", subtitle: "Your favorite bookmark replacement tool" },
     sections: ["Primary", "Secondary", "Tertiary"],
     links: [],
     quotes: [],
     backgrounds: [],
+    layout: { maxColumns: 4, minCardWidth: 180 },
     search: { defaultEngine: "google", engines: [] }
 };
 
@@ -81,6 +83,11 @@ const storageSync = {
 
 let activeConfig = null;
 let faviconCache = {};
+let isRearranging = false;
+let lastRenderLinks = [];
+let gridObserver = null;
+let currentDragType = "";
+let currentDragSection = null;
 
 document.addEventListener("DOMContentLoaded", () => {
     init().catch((error) => {
@@ -96,6 +103,7 @@ async function init() {
     renderAll(activeConfig);
     setupSettings();
     refreshSyncStatus();
+    setupGridObserver();
 }
 
 async function loadConfig() {
@@ -141,10 +149,18 @@ function mergeConfig(base, override) {
         return structuredClone(base);
     }
     return {
+        branding: {
+            title: override.branding?.title || base.branding.title,
+            subtitle: override.branding?.subtitle || base.branding.subtitle
+        },
         sections: Array.isArray(override.sections) ? override.sections : base.sections,
         links: Array.isArray(override.links) ? override.links : base.links,
         quotes: Array.isArray(override.quotes) ? override.quotes : base.quotes,
         backgrounds: Array.isArray(override.backgrounds) ? override.backgrounds : base.backgrounds,
+        layout: {
+            maxColumns: Number.isFinite(override.layout?.maxColumns) ? override.layout.maxColumns : base.layout.maxColumns,
+            minCardWidth: Number.isFinite(override.layout?.minCardWidth) ? override.layout.minCardWidth : base.layout.minCardWidth
+        },
         search: {
             defaultEngine: override.search?.defaultEngine || base.search.defaultEngine,
             engines: Array.isArray(override.search?.engines) ? override.search.engines : base.search.engines
@@ -170,10 +186,26 @@ function applyLocalAssets(config, localAssets) {
 }
 
 function renderAll(config) {
+    renderBranding(config.branding);
     renderSearch(config.search);
     renderQuote(config.quotes);
     renderBackground(config.backgrounds);
     renderSections(config);
+    updateGridColumns(config.layout);
+}
+
+function renderBranding(branding) {
+    const title = document.getElementById("title");
+    const subtitle = document.getElementById("subtitle");
+    if (title && branding?.title) {
+        title.textContent = branding.title;
+    }
+    if (subtitle && branding?.subtitle) {
+        subtitle.textContent = branding.subtitle;
+    }
+    if (branding?.title) {
+        document.title = branding.title;
+    }
 }
 
 function renderSearch(search) {
@@ -230,9 +262,10 @@ function renderSections(config) {
     container.innerHTML = "";
 
     const sections = deriveSections(config.links, config.sections);
+    lastRenderLinks = ensureLinkIds(config.links || []);
     const linksBySection = new Map();
     sections.forEach((section) => linksBySection.set(section, []));
-    config.links.forEach((link) => {
+    lastRenderLinks.forEach((link) => {
         const section = link.section || "Links";
         if (!linksBySection.has(section)) {
             linksBySection.set(section, []);
@@ -246,13 +279,26 @@ function renderSections(config) {
         }
         const sectionEl = document.createElement("div");
         sectionEl.className = "section";
+        sectionEl.dataset.section = section;
+        sectionEl.draggable = isRearranging;
 
+        const header = document.createElement("div");
+        header.className = "section-header";
         const heading = document.createElement("h2");
         heading.textContent = section;
-        sectionEl.appendChild(heading);
+        const handle = document.createElement("button");
+        handle.type = "button";
+        handle.className = "section-handle";
+        handle.dataset.drag = "section";
+        handle.draggable = isRearranging;
+        handle.textContent = "Reorder";
+        header.appendChild(heading);
+        header.appendChild(handle);
+        sectionEl.appendChild(header);
 
         const grid = document.createElement("div");
         grid.className = "links-grid";
+        grid.dataset.section = section;
 
         links.forEach((link) => {
             const card = document.createElement("a");
@@ -260,6 +306,9 @@ function renderSections(config) {
             card.href = link.url;
             card.target = "_blank";
             card.rel = "noopener";
+            card.dataset.linkId = link.id;
+            card.dataset.section = section;
+            card.draggable = isRearranging;
 
             const icon = document.createElement("img");
             icon.alt = "";
@@ -270,6 +319,14 @@ function renderSections(config) {
 
             card.appendChild(icon);
             card.appendChild(label);
+            if (isRearranging) {
+                const remove = document.createElement("button");
+                remove.type = "button";
+                remove.className = "link-remove";
+                remove.dataset.action = "remove-link-card";
+                remove.textContent = "X";
+                card.appendChild(remove);
+            }
             grid.appendChild(card);
 
             resolveFavicon(link).then((src) => {
@@ -364,31 +421,32 @@ function blobToDataUrl(blob) {
 
 function setupSettings() {
     const settingsToggle = document.getElementById("settings-toggle");
+    const rearrangeToggle = document.getElementById("rearrange-toggle");
     const settingsPanel = document.getElementById("settings-panel");
     const settingsSave = document.getElementById("settings-save");
+    const settingsSaveBottom = document.getElementById("settings-save-bottom");
     const settingsCancel = document.getElementById("settings-cancel");
+    const settingsCancelBottom = document.getElementById("settings-cancel-bottom");
     const addLink = document.getElementById("add-link");
+    const addSection = document.getElementById("add-section");
+    const newSectionName = document.getElementById("new-section-name");
     const addBackgroundUrl = document.getElementById("add-background-url");
     const addEngine = document.getElementById("add-engine");
     const backgroundUpload = document.getElementById("background-upload");
+    const backgroundUploadName = document.getElementById("background-upload-name");
     const quotesUpload = document.getElementById("quotes-upload");
+    const quotesUploadName = document.getElementById("quotes-upload-name");
     const searchUpload = document.getElementById("search-upload");
+    const searchUploadName = document.getElementById("search-upload-name");
     const exportConfig = document.getElementById("export-config");
     const importConfig = document.getElementById("import-config");
+    const importConfigName = document.getElementById("import-config-name");
     const resetConfig = document.getElementById("reset-config");
+    const linksEditor = document.getElementById("links-editor");
+    const sectionsContainer = document.getElementById("sections-container");
+    const layoutMaxColumns = document.getElementById("layout-max-columns");
 
-    settingsToggle.addEventListener("click", () => {
-        renderSettings(activeConfig);
-        settingsPanel.classList.add("open");
-        settingsPanel.setAttribute("aria-hidden", "false");
-    });
-
-    settingsCancel.addEventListener("click", () => {
-        settingsPanel.classList.remove("open");
-        settingsPanel.setAttribute("aria-hidden", "true");
-    });
-
-    settingsSave.addEventListener("click", async () => {
+    const saveConfig = async (closePanel) => {
         const nextConfig = collectConfigFromEditors();
         const { syncConfig, localAssets } = splitConfig(nextConfig);
         activeConfig = applyLocalAssets(syncConfig, localAssets);
@@ -401,8 +459,54 @@ function setupSettings() {
             setSyncStatus(`Sync: ${syncResult.error || "error"}`, "warn");
         }
         renderAll(activeConfig);
+        if (closePanel) {
+            settingsPanel.classList.remove("open");
+            settingsPanel.setAttribute("aria-hidden", "true");
+        }
+    };
+
+    settingsToggle.addEventListener("click", () => {
+        if (settingsPanel.classList.contains("open")) {
+            settingsPanel.classList.remove("open");
+            settingsPanel.setAttribute("aria-hidden", "true");
+            setRearrangeMode(false);
+            return;
+        }
+        setRearrangeMode(false);
+        renderSettings(activeConfig);
+        settingsPanel.classList.add("open");
+        settingsPanel.setAttribute("aria-hidden", "false");
+    });
+
+    rearrangeToggle.addEventListener("click", async () => {
+        if (!isRearranging) {
+            setRearrangeMode(true);
+            return;
+        }
+        await persistActiveConfig();
+        setRearrangeMode(false);
+    });
+
+    settingsCancel.addEventListener("click", () => {
         settingsPanel.classList.remove("open");
         settingsPanel.setAttribute("aria-hidden", "true");
+        setRearrangeMode(false);
+    });
+
+    settingsCancelBottom.addEventListener("click", () => {
+        settingsPanel.classList.remove("open");
+        settingsPanel.setAttribute("aria-hidden", "true");
+        setRearrangeMode(false);
+    });
+
+    settingsSave.addEventListener("click", async () => {
+        await saveConfig(true);
+        setRearrangeMode(false);
+    });
+
+    settingsSaveBottom.addEventListener("click", async () => {
+        await saveConfig(true);
+        setRearrangeMode(false);
     });
 
     settingsPanel.addEventListener("click", (event) => {
@@ -420,9 +524,20 @@ function setupSettings() {
             event.target.closest("[data-engine-row]")?.remove();
             refreshDefaultEngineOptions();
         }
+        if (action === "remove-section") {
+            event.target.closest("[data-section-block]")?.remove();
+        }
     });
 
     addLink.addEventListener("click", () => addLinkRow());
+    addSection.addEventListener("click", () => {
+        const name = newSectionName.value.trim();
+        if (!name) {
+            return;
+        }
+        ensureLinksSection(name);
+        newSectionName.value = "";
+    });
     addBackgroundUrl.addEventListener("click", () => addBackgroundRow(""));
     addEngine.addEventListener("click", () => {
         addEngineRow({ id: "", label: "", url: "", queryParam: "q" });
@@ -431,6 +546,7 @@ function setupSettings() {
 
     backgroundUpload.addEventListener("change", async (event) => {
         const files = Array.from(event.target.files || []);
+        updateFileLabel(backgroundUploadName, files, "No files chosen");
         for (const file of files) {
             const dataUrl = await fileToDataUrl(file);
             addBackgroundRow(dataUrl);
@@ -443,6 +559,7 @@ function setupSettings() {
         if (!file) {
             return;
         }
+        updateFileLabel(quotesUploadName, [file], "No file chosen");
         const text = await file.text();
         const textarea = document.getElementById("quotes-editor");
         const existing = textarea.value ? `${textarea.value}\n` : "";
@@ -455,6 +572,7 @@ function setupSettings() {
         if (!file) {
             return;
         }
+        updateFileLabel(searchUploadName, [file], "No file chosen");
         try {
             const payload = JSON.parse(await file.text());
             const imported = payload.engines ? payload : { engines: payload };
@@ -482,6 +600,7 @@ function setupSettings() {
         if (!file) {
             return;
         }
+        updateFileLabel(importConfigName, [file], "No file chosen");
         try {
             const payload = JSON.parse(await file.text());
             renderSettings(mergeConfig(activeConfig, payload));
@@ -493,6 +612,10 @@ function setupSettings() {
     });
 
     resetConfig.addEventListener("click", async () => {
+        const confirmed = window.confirm("Reset all settings to defaults? This cannot be undone.");
+        if (!confirmed) {
+            return;
+        }
         await Promise.all([
             storageSync.remove(SYNC_KEY),
             storageLocal.remove([LOCAL_ASSETS_KEY, FAVICON_CACHE_KEY, SYNC_META_KEY])
@@ -503,6 +626,7 @@ function setupSettings() {
         settingsPanel.classList.remove("open");
         settingsPanel.setAttribute("aria-hidden", "true");
         refreshSyncStatus();
+        setRearrangeMode(false);
     });
 
     settingsPanel.addEventListener("change", (event) => {
@@ -513,6 +637,179 @@ function setupSettings() {
             refreshDefaultEngineOptions();
         }
     });
+
+    layoutMaxColumns.addEventListener("change", () => {
+        const nextLayout = collectLayout();
+        activeConfig = { ...activeConfig, layout: nextLayout };
+        updateGridColumns(activeConfig.layout);
+    });
+
+    linksEditor.addEventListener("dragstart", (event) => {
+        if (!isRearranging) {
+            return;
+        }
+        const row = event.target.closest("[data-link-row]");
+        if (!row) {
+            return;
+        }
+        row.classList.add("dragging");
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", row.dataset.linkId || "");
+    });
+
+    linksEditor.addEventListener("dragend", (event) => {
+        const row = event.target.closest("[data-link-row]");
+        if (row) {
+            row.classList.remove("dragging");
+        }
+    });
+
+    linksEditor.addEventListener("dragover", (event) => {
+        if (!isRearranging) {
+            return;
+        }
+        const list = event.target.closest("[data-section-list]");
+        if (!list) {
+            return;
+        }
+        event.preventDefault();
+        const row = event.target.closest("[data-link-row]");
+        const dragging = linksEditor.querySelector(".link-row.dragging");
+        if (row && dragging && row !== dragging && list.contains(row)) {
+            list.insertBefore(dragging, row);
+        }
+    });
+
+    linksEditor.addEventListener("drop", (event) => {
+        if (!isRearranging) {
+            return;
+        }
+        const list = event.target.closest("[data-section-list]");
+        if (!list) {
+            return;
+        }
+        event.preventDefault();
+        const dragging = linksEditor.querySelector(".link-row.dragging");
+        if (dragging && !list.contains(dragging)) {
+            list.appendChild(dragging);
+        }
+        if (dragging) {
+            const section = list.dataset.section;
+            const sectionInput = dragging.querySelector('[data-field="section"]');
+            if (sectionInput) {
+                sectionInput.value = section;
+            }
+        }
+    });
+
+    sectionsContainer.addEventListener("dragstart", (event) => {
+        if (!isRearranging) {
+            return;
+        }
+        const handle = event.target.closest("[data-drag=\"section\"]");
+        const card = event.target.closest(".link-card");
+        if (handle && !card) {
+            const sectionEl = handle.closest(".section");
+            if (!sectionEl) {
+                return;
+            }
+            sectionEl.classList.add("dragging");
+            event.dataTransfer.effectAllowed = "move";
+            event.dataTransfer.setData("text/plain", sectionEl.dataset.section || "");
+            event.dataTransfer.setData("mothership-drag", "section");
+            currentDragType = "section";
+            currentDragSection = sectionEl;
+            return;
+        }
+        if (!card) {
+            return;
+        }
+        card.classList.add("dragging");
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", card.dataset.linkId || "");
+        event.dataTransfer.setData("mothership-drag", "link");
+        currentDragType = "link";
+        currentDragSection = null;
+    });
+
+    sectionsContainer.addEventListener("dragend", (event) => {
+        const sectionEl = event.target.closest(".section");
+        if (sectionEl) {
+            sectionEl.classList.remove("dragging");
+        }
+        const card = event.target.closest(".link-card");
+        if (card) {
+            card.classList.remove("dragging");
+        }
+        currentDragType = "";
+        currentDragSection = null;
+    });
+
+    sectionsContainer.addEventListener("dragover", (event) => {
+        if (!isRearranging) {
+            return;
+        }
+        const dragType = event.dataTransfer.getData("mothership-drag") || currentDragType;
+        if (dragType === "section") {
+            const sectionEl = event.target.closest(".section");
+            const draggingSection = currentDragSection || sectionsContainer.querySelector(".section.dragging");
+            if (sectionEl && draggingSection && sectionEl !== draggingSection) {
+                event.preventDefault();
+                sectionsContainer.insertBefore(draggingSection, sectionEl);
+            }
+            return;
+        }
+        const grid = event.target.closest(".links-grid");
+        if (!grid) {
+            return;
+        }
+        event.preventDefault();
+        const card = event.target.closest(".link-card");
+        const dragging = sectionsContainer.querySelector(".link-card.dragging");
+        if (card && dragging && card !== dragging && grid.contains(card)) {
+            grid.insertBefore(dragging, card);
+        }
+    });
+
+    sectionsContainer.addEventListener("drop", (event) => {
+        if (!isRearranging) {
+            return;
+        }
+        const dragType = event.dataTransfer.getData("mothership-drag") || currentDragType;
+        if (dragType === "section") {
+            event.preventDefault();
+            return;
+        }
+        const grid = event.target.closest(".links-grid");
+        if (!grid) {
+            return;
+        }
+        event.preventDefault();
+        const dragging = sectionsContainer.querySelector(".link-card.dragging");
+        if (dragging && !grid.contains(dragging)) {
+            grid.appendChild(dragging);
+        }
+        if (dragging) {
+            dragging.dataset.section = grid.dataset.section || dragging.dataset.section;
+        }
+    });
+
+    sectionsContainer.addEventListener("click", (event) => {
+        const action = event.target.dataset.action;
+        if (isRearranging && event.target.closest(".link-card")) {
+            event.preventDefault();
+        }
+        if (action === "remove-link-card") {
+            event.preventDefault();
+            const card = event.target.closest(".link-card");
+            const grid = card?.closest(".links-grid");
+            const section = card?.closest(".section");
+            card?.remove();
+            if (grid && grid.querySelectorAll(".link-card").length === 0) {
+                section?.remove();
+            }
+        }
+    });
 }
 
 function renderSettings(config) {
@@ -520,26 +817,85 @@ function renderSettings(config) {
     renderBackgroundsEditor(config.backgrounds);
     renderQuotesEditor(config.quotes);
     renderSearchEditor(config.search);
+    renderLayoutEditor(config.layout);
+    renderBrandingEditor(config.branding);
 }
 
 function renderLinksEditor(links) {
     const container = document.getElementById("links-editor");
     const template = document.getElementById("link-row-template");
     container.innerHTML = "";
+    const sections = deriveSections(links, activeConfig?.sections || []);
+    const sectionBlocks = new Map();
+
+    const ensureSection = (sectionName) => {
+        if (sectionBlocks.has(sectionName)) {
+            return sectionBlocks.get(sectionName);
+        }
+        const list = createLinksSection(sectionName, container);
+        sectionBlocks.set(sectionName, list);
+        return list;
+    };
+
+    if (!sections.length) {
+        sections.push("Links");
+    }
+
+    sections.forEach((section) => ensureSection(section));
+
     links.forEach((link) => {
         const row = template.content.firstElementChild.cloneNode(true);
         row.dataset.linkId = link.id || createId();
         row.dataset.iconOverride = link.iconOverride || "";
         row.querySelector('[data-field="name"]').value = link.name || "";
         row.querySelector('[data-field="url"]').value = link.url || "";
-        row.querySelector('[data-field="section"]').value = link.section || "";
+        row.querySelector('[data-field="section"]').value = link.section || sections[0];
         const preview = row.querySelector(".icon-preview");
         preview.src = link.iconOverride || "images/icon.png";
-        container.appendChild(row);
+        row.draggable = isRearranging;
+        const sectionName = link.section || sections[0];
+        const list = ensureSection(sectionName);
+        list.appendChild(row);
     });
     if (!links.length) {
-        addLinkRow();
+        addLinkRow(sections[0]);
     }
+    updateLinkRowDragState();
+}
+
+function ensureLinksSection(sectionName) {
+    const container = document.getElementById("links-editor");
+    const existing = container.querySelector(`[data-section-block][data-section="${sectionName}"]`);
+    if (existing) {
+        return;
+    }
+    createLinksSection(sectionName, container);
+}
+
+function createLinksSection(sectionName, container) {
+    const sectionEl = document.createElement("div");
+    sectionEl.className = "links-section";
+    sectionEl.dataset.section = sectionName;
+    sectionEl.dataset.sectionBlock = "true";
+    const header = document.createElement("div");
+    header.className = "links-section-header";
+    const heading = document.createElement("h4");
+    heading.textContent = sectionName;
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "ghost-button section-remove";
+    remove.dataset.action = "remove-section";
+    remove.textContent = "X";
+    const list = document.createElement("div");
+    list.className = "section-list";
+    list.dataset.sectionList = "true";
+    list.dataset.section = sectionName;
+    header.appendChild(heading);
+    header.appendChild(remove);
+    sectionEl.appendChild(header);
+    sectionEl.appendChild(list);
+    container.appendChild(sectionEl);
+    return list;
 }
 
 function renderBackgroundsEditor(backgrounds) {
@@ -569,14 +925,57 @@ function renderSearchEditor(search) {
     refreshDefaultEngineOptions(search.defaultEngine);
 }
 
-function addLinkRow() {
+function renderBrandingEditor(branding) {
+    const title = document.getElementById("branding-title");
+    const subtitle = document.getElementById("branding-subtitle");
+    if (title) {
+        title.value = branding?.title || "";
+    }
+    if (subtitle) {
+        subtitle.value = branding?.subtitle || "";
+    }
+}
+function renderLayoutEditor(layout) {
+    const input = document.getElementById("layout-max-columns");
+    const value = Number.isFinite(layout?.maxColumns) ? layout.maxColumns : 4;
+    input.value = value;
+}
+
+function addLinkRow(sectionName) {
     const container = document.getElementById("links-editor");
     const template = document.getElementById("link-row-template");
+    const sectionList =
+        (sectionName && container.querySelector(`[data-section-list][data-section="${sectionName}"]`)) ||
+        container.querySelector("[data-section-list]");
+    if (!sectionList) {
+        const section = document.createElement("div");
+        section.className = "links-section";
+        section.dataset.section = sectionName || "Links";
+        const heading = document.createElement("h4");
+        heading.textContent = sectionName || "Links";
+        const list = document.createElement("div");
+        list.className = "section-list";
+        list.dataset.sectionList = "true";
+        list.dataset.section = sectionName || "Links";
+        section.appendChild(heading);
+        section.appendChild(list);
+        container.appendChild(section);
+    }
+    const targetList =
+        (sectionName && container.querySelector(`[data-section-list][data-section="${sectionName}"]`)) ||
+        container.querySelector("[data-section-list]");
     const row = template.content.firstElementChild.cloneNode(true);
     row.dataset.linkId = createId();
     row.dataset.iconOverride = "";
     row.querySelector(".icon-preview").src = "images/icon.png";
-    container.appendChild(row);
+    row.querySelector('[data-field="section"]').value = sectionName || "Links";
+    row.draggable = isRearranging;
+    if (targetList) {
+        targetList.appendChild(row);
+    } else {
+        container.appendChild(row);
+    }
+    updateLinkRowDragState();
 }
 
 function addBackgroundRow(value, containerOverride, templateOverride) {
@@ -624,15 +1023,20 @@ function refreshDefaultEngineOptions(selectedValue) {
 }
 
 function collectConfigFromEditors() {
+    const branding = collectBranding();
+    const sections = collectSectionsFromEditor();
     const links = collectLinks();
     const backgrounds = collectBackgrounds();
     const quotes = collectQuotes();
     const search = collectSearch();
+    const layout = collectLayout();
     return {
-        sections: deriveSections(links, activeConfig?.sections || []),
+        branding,
+        sections: sections.length ? sections : deriveSections(links, []),
         links,
         quotes,
         backgrounds,
+        layout,
         search
     };
 }
@@ -661,6 +1065,113 @@ function collectLinks() {
         });
     });
     return links;
+}
+
+function setRearrangeMode(enabled) {
+    isRearranging = enabled;
+    const panel = document.getElementById("settings-panel");
+    if (panel) {
+        panel.classList.toggle("rearrange", enabled);
+    }
+    document.body.classList.toggle("rearrange-mode", enabled);
+    const toggle = document.getElementById("rearrange-toggle");
+    if (toggle) {
+        toggle.textContent = enabled ? "Finish" : "Rearrange";
+    }
+    if (enabled) {
+        renderAll(activeConfig);
+    }
+    updateLinkRowDragState();
+    updateMainDragState();
+    if (!enabled) {
+        renderAll(activeConfig);
+    }
+}
+
+function updateLinkRowDragState() {
+    document.querySelectorAll("[data-link-row]").forEach((row) => {
+        row.draggable = isRearranging;
+    });
+}
+
+function updateMainDragState() {
+    document.querySelectorAll(".link-card").forEach((card) => {
+        card.draggable = isRearranging;
+    });
+    document.querySelectorAll(".section").forEach((section) => {
+        section.draggable = isRearranging;
+    });
+    document.querySelectorAll(".section-handle").forEach((handle) => {
+        handle.draggable = isRearranging;
+    });
+}
+
+function updateGridColumns(layout) {
+    const maxColumns = Math.min(4, Math.max(1, layout?.maxColumns || 4));
+    const minCardWidth = Math.max(160, layout?.minCardWidth || 180);
+    document.querySelectorAll(".links-grid").forEach((grid) => {
+        const width = grid.clientWidth || 0;
+        const computed = width ? Math.max(1, Math.floor(width / minCardWidth)) : maxColumns;
+        const columns = Math.min(maxColumns, computed);
+        grid.style.setProperty("--columns", columns);
+        grid.style.setProperty("--min-card-width", `${minCardWidth}px`);
+    });
+}
+
+function setupGridObserver() {
+    const container = document.getElementById("sections-container");
+    if (!container || typeof ResizeObserver === "undefined") {
+        window.addEventListener("resize", () => updateGridColumns(activeConfig?.layout));
+        return;
+    }
+    if (gridObserver) {
+        gridObserver.disconnect();
+    }
+    gridObserver = new ResizeObserver(() => {
+        updateGridColumns(activeConfig?.layout);
+    });
+    gridObserver.observe(container);
+}
+
+async function persistActiveConfig() {
+    const nextLinks = collectLinksFromMain();
+    if (nextLinks.length) {
+        activeConfig = {
+            ...activeConfig,
+            links: nextLinks,
+            sections: collectSectionsFromMain()
+        };
+    }
+    const { syncConfig, localAssets } = splitConfig(activeConfig);
+    const syncResult = await setSyncConfig(syncConfig);
+    await storageLocal.set({ [LOCAL_ASSETS_KEY]: localAssets });
+    if (syncResult.ok) {
+        await storageLocal.set({ [SYNC_META_KEY]: { lastSyncAt: Date.now() } });
+        refreshSyncStatus();
+    } else {
+        setSyncStatus(`Sync: ${syncResult.error || "error"}`, "warn");
+    }
+}
+
+function collectLinksFromMain() {
+    const links = [];
+    const grids = document.querySelectorAll(".links-grid");
+    grids.forEach((grid) => {
+        const section = grid.dataset.section || "Links";
+        grid.querySelectorAll(".link-card").forEach((card) => {
+            const link = lastRenderLinks.find((item) => item.id === card.dataset.linkId);
+            if (link) {
+                links.push({ ...link, section });
+            }
+        });
+    });
+    return links;
+}
+
+function collectSectionsFromMain() {
+    return Array.from(document.querySelectorAll(".section"))
+        .map((section) => section.dataset.section || "")
+        .filter((name) => name.length > 0);
 }
 
 function collectBackgrounds() {
@@ -699,6 +1210,43 @@ function collectSearch() {
     });
     const defaultEngine = document.getElementById("default-engine").value || engines[0]?.id || "";
     return { defaultEngine, engines };
+}
+
+function collectLayout() {
+    const input = document.getElementById("layout-max-columns");
+    const maxColumns = Math.min(4, Math.max(2, parseInt(input.value, 10) || 4));
+    return {
+        maxColumns,
+        minCardWidth: activeConfig?.layout?.minCardWidth || 180
+    };
+}
+
+function updateFileLabel(labelEl, files, emptyLabel) {
+    if (!labelEl) {
+        return;
+    }
+    if (!files || files.length === 0) {
+        labelEl.textContent = emptyLabel;
+        return;
+    }
+    if (files.length === 1) {
+        labelEl.textContent = files[0].name;
+        return;
+    }
+    labelEl.textContent = `${files.length} files selected`;
+}
+
+function collectSectionsFromEditor() {
+    return Array.from(document.querySelectorAll("[data-section-block]"))
+        .map((block) => block.dataset.section)
+        .filter((name) => name && name.trim().length > 0);
+}
+
+function collectBranding() {
+    const title = document.getElementById("branding-title")?.value.trim() || "Mothership on Main";
+    const subtitle =
+        document.getElementById("branding-subtitle")?.value.trim() || "Your favorite bookmark replacement tool";
+    return { title, subtitle };
 }
 
 function splitConfig(config) {
@@ -758,7 +1306,7 @@ async function refreshSyncStatus() {
     const meta = await storageLocal.get(SYNC_META_KEY);
     const lastSyncAt = meta[SYNC_META_KEY]?.lastSyncAt;
     if (lastSyncAt) {
-        setSyncStatus(`Sync: on · ${timeAgo(lastSyncAt)}`, "on");
+        setSyncStatus(`Sync: on - ${timeAgo(lastSyncAt)}`, "on");
     } else {
         setSyncStatus("Sync: on", "on");
     }

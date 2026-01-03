@@ -1,42 +1,20 @@
 {
+  "branding": {
+    "title": "Mothership on Main",
+    "subtitle": "Your favorite bookmark replacement tool"
+  },
   "sections": ["Primary", "Secondary", "Tertiary"],
   "links": [
     { "section": "Primary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
     { "section": "Primary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
     { "section": "Primary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
     { "section": "Primary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
-    { "section": "Primary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
-    { "section": "Primary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
-    { "section": "Primary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
-    { "section": "Primary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
-    { "section": "Primary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
-    { "section": "Primary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
-    { "section": "Primary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
-    { "section": "Primary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
-    { "section": "Primary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
-    { "section": "Primary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
-    { "section": "Primary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
-    { "section": "Primary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
-    { "section": "Secondary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
-    { "section": "Secondary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
-    { "section": "Secondary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
-    { "section": "Secondary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
-    { "section": "Secondary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
-    { "section": "Secondary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
-    { "section": "Secondary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
-    { "section": "Secondary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
-    { "section": "Secondary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
-    { "section": "Secondary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
-    { "section": "Secondary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
-    { "section": "Secondary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
     { "section": "Secondary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
     { "section": "Secondary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
     { "section": "Secondary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
     { "section": "Secondary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
     { "section": "Tertiary", "name": "Fireplace", "url": "https://www.youtube.com/watch?v=r2iSxZGYvCs", "iconOverride": "" },
-    { "section": "Tertiary", "name": "San Diego Pacific Beach", "url": "https://www.youtube.com/watch?v=w6P-AaGwTMM", "iconOverride": "" },
-    { "section": "Tertiary", "name": "Snowfall on a Lake", "url": "https://www.youtube.com/watch?v=jh_KFTYJnDo", "iconOverride": "" },
-    { "section": "Tertiary", "name": "Heavy Rain on Grass", "url": "https://www.youtube.com/watch?v=BoCLdG2x594", "iconOverride": "" }
+    { "section": "Tertiary", "name": "San Diego Pacific Beach", "url": "https://www.youtube.com/watch?v=w6P-AaGwTMM", "iconOverride": "" }
   ],
   "quotes": [
     "Time is like a river that carries us forward into encounters with reality that require us to make decisions. We cannot stop our movement down this river and we cannot avoid those encounters. We can only approach them in the best possible way. (Ray Dalio)",
@@ -54,6 +32,10 @@
     "images/pexels-greg-2418664.jpg",
     "images/pexels-johannes-plenio-1996042.jpg"
   ],
+  "layout": {
+    "maxColumns": 4,
+    "minCardWidth": 180
+  },
   "search": {
     "defaultEngine": "google",
     "engines": [
