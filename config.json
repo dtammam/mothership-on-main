@@ -1,0 +1,67 @@
+{
+  "sections": ["Primary", "Secondary", "Tertiary"],
+  "links": [
+    { "section": "Primary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
+    { "section": "Primary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
+    { "section": "Primary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
+    { "section": "Primary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
+    { "section": "Primary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
+    { "section": "Primary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
+    { "section": "Primary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
+    { "section": "Primary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
+    { "section": "Primary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
+    { "section": "Primary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
+    { "section": "Primary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
+    { "section": "Primary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
+    { "section": "Primary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
+    { "section": "Primary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
+    { "section": "Primary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
+    { "section": "Primary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
+    { "section": "Secondary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
+    { "section": "Secondary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
+    { "section": "Secondary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
+    { "section": "Secondary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
+    { "section": "Secondary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
+    { "section": "Secondary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
+    { "section": "Secondary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
+    { "section": "Secondary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
+    { "section": "Secondary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
+    { "section": "Secondary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
+    { "section": "Secondary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
+    { "section": "Secondary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
+    { "section": "Secondary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
+    { "section": "Secondary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
+    { "section": "Secondary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
+    { "section": "Secondary", "name": "Replace Me", "url": "https://www.google.com/", "iconOverride": "" },
+    { "section": "Tertiary", "name": "Fireplace", "url": "https://www.youtube.com/watch?v=r2iSxZGYvCs", "iconOverride": "" },
+    { "section": "Tertiary", "name": "San Diego Pacific Beach", "url": "https://www.youtube.com/watch?v=w6P-AaGwTMM", "iconOverride": "" },
+    { "section": "Tertiary", "name": "Snowfall on a Lake", "url": "https://www.youtube.com/watch?v=jh_KFTYJnDo", "iconOverride": "" },
+    { "section": "Tertiary", "name": "Heavy Rain on Grass", "url": "https://www.youtube.com/watch?v=BoCLdG2x594", "iconOverride": "" }
+  ],
+  "quotes": [
+    "Time is like a river that carries us forward into encounters with reality that require us to make decisions. We cannot stop our movement down this river and we cannot avoid those encounters. We can only approach them in the best possible way. (Ray Dalio)",
+    "We cannot solve problems with the kind of thinking we employed when we came up with them (Albert Einstein)",
+    "Machines are better than me at whatever they are for. That is the point of tools. A calculator is better than me at 238 by 182 and a bucket is better than me at holding water. (Cassie Kozyrkov)",
+    "History is the future. (Bob Steel)",
+    "Have your opinion, do not let your opinion have you. (Patrice O'Neal)",
+    "Goal setting is the secret to a compelling future (Tony Robbins)"
+  ],
+  "backgrounds": [
+    "images/pexels-alex-fu-4815497.jpg",
+    "images/pexels-francesco-ungaro-3218443.jpg",
+    "images/pexels-eberhard-grossgasteiger-572897.jpg",
+    "images/pexels-andy-vu-3244513.jpg",
+    "images/pexels-greg-2418664.jpg",
+    "images/pexels-johannes-plenio-1996042.jpg"
+  ],
+  "search": {
+    "defaultEngine": "google",
+    "engines": [
+      { "id": "google", "label": "Google", "url": "https://www.google.com/search", "queryParam": "q" },
+      { "id": "bing", "label": "Bing", "url": "https://www.bing.com/search", "queryParam": "q" },
+      { "id": "duckduckgo", "label": "DuckDuckGo", "url": "https://duckduckgo.com/", "queryParam": "q" },
+      { "id": "microsoft", "label": "Microsoft Learn", "url": "https://learn.microsoft.com/en-us/search/", "queryParam": "terms" },
+      { "id": "wikipedia", "label": "Wikipedia", "url": "https://en.wikipedia.org/w/index.php", "queryParam": "search" }
+    ]
+  }
+}

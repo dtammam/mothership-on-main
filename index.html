@@ -1,217 +1,160 @@
 <!--
-    🛸 Mothership on Main
+    Mothership on Main
     Mothership on Main is a Chromium-enabled extension that replaces your home and new tab page with an efficient view
     Author: Dean Tammam
     Date: 4/20/2023
 -->
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
-    <!-- Define the basic structure of a webpage, including the head section for metadata and body section for content with a "dark mode" class attribute. -->
         <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" type="text/css" href="css/style.css">
         <link rel="icon" type="image/x-icon" href="images/icon.ico">
         <title>Mothership on Main</title>
     </head>
-    <body class="dark mode"></body>
+    <body>
+        <main class="page">
+            <header class="masthead">
+                <div class="title-row">
+                    <div>
+                        <p class="eyebrow">New tab command deck</p>
+                        <h1>Mothership on Main</h1>
+                    </div>
+                    <button id="settings-toggle" class="ghost-button" type="button">Customize</button>
+                </div>
 
-    <!-- Header of the page -->
-    <h1>🛸 Mothership on Main</h1>
+                <form id="search-form" action="" method="get" target="_blank">
+                    <select id="search-engine" aria-label="Search engine"></select>
+                    <input id="search-input" type="text" name="q" placeholder="Search the universe" required>
+                    <button type="submit">Search</button>
+                </form>
+            </header>
 
-    <!-- Search form with a dropdown -->
-    <form id="search-form" action="" method="get" target ="_blank">
-        <!-- Display a rotation of recent manually curated feedback on each pageload -->
-        <select id="search-engine">
-            <option value="google">Google</option>
-            <option value="bing">Bing</option>
-            <option value="duckduckgo">DuckDuckGo</option>
-            <option value="microsoft">Microsoft</option>
-            <option value="wikipedia">Wikipedia</option>
-        </select>
-        <input id="search-input" type="text" name="q" required>
-        <button type="submit">Search</button>
-    </form>
+            <section class="quote">
+                <h2>Feedback to Consider</h2>
+                <p id="text-container"></p>
+            </section>
 
-    <!-- Display rotating feedback -->
-    <h2>Feedback to Consider</h2>
-    <p id="text-container"></p>
+            <section id="sections-container" class="sections"></section>
+        </main>
 
-    <!-- Load and run the JavaScript file for interactivity -->
-    <script src="js/script.js"></script>
+        <aside id="settings-panel" class="settings-panel" aria-hidden="true">
+            <div class="settings-header">
+                <div>
+                    <p class="eyebrow">Config control</p>
+                    <h2>Customize</h2>
+                </div>
+                <div class="settings-actions">
+                    <button id="settings-save" type="button">Save</button>
+                    <button id="settings-cancel" class="ghost-button" type="button">Cancel</button>
+                </div>
+            </div>
+            <div class="sync-row">
+                <span id="sync-status" class="sync-status">Sync: checking...</span>
+            </div>
 
-    <!-- Links that are regularly accessed for day-to-day processes -->
-    <h2>Primary</h2>
-        <div class="section">
-            <!-- Row 1 -->
-            <a class="link" href="https://www.google.com/">
-                <img src="https://www.google.com/favicon.ico" width="16" height="16">
-                 Replace Me
-            </a>
-            <a class="link" href="https://www.google.com/">
-                <img src="https://www.google.com/favicon.ico" width="16" height="16">
-                 Replace Me
-            </a>
-            <a class="link" href="https://www.google.com/">
-                <img src="https://www.google.com/favicon.ico" width="16" height="16">
-                 Replace Me
-            </a>
-            <a class="link" href="https://www.google.com/">
-                <img src="https://www.google.com/favicon.ico" width="16" height="16">
-                 Replace Me
-            </a>
+            <div class="settings-section">
+                <h3>Links</h3>
+                <div id="links-editor" class="editor-list"></div>
+                <button id="add-link" class="ghost-button" type="button">Add link</button>
+            </div>
 
-            <!-- Row 2 -->
-            <a class="link" href="https://www.google.com/">
-                <img src="https://www.google.com/favicon.ico" width="16" height="16">
-                 Replace Me
-            </a>
-            <a class="link" href="https://www.google.com/">
-                <img src="https://www.google.com/favicon.ico" width="16" height="16">
-                 Replace Me
-            </a>
-            <a class="link" href="https://www.google.com/">
-                <img src="https://www.google.com/favicon.ico" width="16" height="16">
-                 Replace Me
-            </a>
-            <a class="link" href="https://www.google.com/">
-                <img src="https://www.google.com/favicon.ico" width="16" height="16">
-                 Replace Me
-            </a>
+            <div class="settings-section">
+                <h3>Backgrounds</h3>
+                <div id="backgrounds-editor" class="editor-list"></div>
+                <div class="row">
+                    <input id="background-upload" type="file" accept="image/*" multiple>
+                    <button id="add-background-url" class="ghost-button" type="button">Add background URL</button>
+                </div>
+            </div>
 
-            <!-- Row 3 -->
-            <a class="link" href="https://www.google.com/">
-                <img src="https://www.google.com/favicon.ico" width="16" height="16">
-                 Replace Me
-            </a>
-            <a class="link" href="https://www.google.com/">
-                <img src="https://www.google.com/favicon.ico" width="16" height="16">
-                 Replace Me
-            </a>
-            <a class="link" href="https://www.google.com/">
-                <img src="https://www.google.com/favicon.ico" width="16" height="16">
-                 Replace Me
-            </a>
-            <a class="link" href="https://www.google.com/">
-                <img src="https://www.google.com/favicon.ico" width="16" height="16">
-                 Replace Me
-            </a>
+            <div class="settings-section">
+                <h3>Quotes</h3>
+                <textarea id="quotes-editor" rows="6" placeholder="One quote per line"></textarea>
+                <input id="quotes-upload" type="file" accept=".txt">
+            </div>
 
-            <!-- Row 4 -->     
-            <a class="link" href="https://www.google.com/">
-                <img src="https://www.google.com/favicon.ico" width="16" height="16">
-                 Replace Me
-            </a>
-            <a class="link" href="https://www.google.com/">
-                <img src="https://www.google.com/favicon.ico" width="16" height="16">
-                 Replace Me
-            </a>
-            <a class="link" href="https://www.google.com/">
-                <img src="https://www.google.com/favicon.ico" width="16" height="16">
-                 Replace Me
-            </a>
-            <a class="link" href="https://www.google.com/">
-                <img src="https://www.google.com/favicon.ico" width="16" height="16">
-                 Replace Me
-            </a>
-        </div>
+            <div class="settings-section">
+                <h3>Search</h3>
+                <div id="engines-editor" class="editor-list"></div>
+                <div class="row">
+                    <button id="add-engine" class="ghost-button" type="button">Add engine</button>
+                    <label class="field">
+                        Default
+                        <select id="default-engine"></select>
+                    </label>
+                </div>
+                <input id="search-upload" type="file" accept=".json">
+            </div>
 
-    <!-- Links to less frequently used pages that are still important -->
-    <h2>Secondary</h2>
-        <div class="section">
-            <!-- Row 5 -->   
-            <a class="link" href="https://www.google.com/">
-                <img src="https://www.google.com/favicon.ico" width="16" height="16">
-                 Replace Me
-            </a>
-            <a class="link" href="https://www.google.com/">
-                <img src="https://www.google.com/favicon.ico" width="16" height="16">
-                 Replace Me
-            </a>
-            <a class="link" href="https://www.google.com/">
-                <img src="https://www.google.com/favicon.ico" width="16" height="16">
-                 Replace Me
-            </a>
-            <a class="link" href="https://www.google.com/">
-                <img src="https://www.google.com/favicon.ico" width="16" height="16">
-                 Replace Me
-            </a>
-            
-            <!-- Row 6 -->   
-            <a class="link" href="https://www.google.com/">
-                <img src="https://www.google.com/favicon.ico" width="16" height="16">
-                 Replace Me
-            </a>
-            <a class="link" href="https://www.google.com/">
-                <img src="https://www.google.com/favicon.ico" width="16" height="16">
-                 Replace Me
-            </a>
-            <a class="link" href="https://www.google.com/">
-                <img src="https://www.google.com/favicon.ico" width="16" height="16">
-                 Replace Me
-            </a>
-            <a class="link" href="https://www.google.com/">
-                <img src="https://www.google.com/favicon.ico" width="16" height="16">
-                 Replace Me
-            </a>
-            
-            <!-- Row 7 -->   
-            <a class="link" href="https://www.google.com/">
-                <img src="https://www.google.com/favicon.ico" width="16" height="16">
-                 Replace Me
-            </a>
-            <a class="link" href="https://www.google.com/">
-                <img src="https://www.google.com/favicon.ico" width="16" height="16">
-                 Replace Me
-            </a>
-            <a class="link" href="https://www.google.com/">
-                <img src="https://www.google.com/favicon.ico" width="16" height="16">
-                 Replace Me
-            </a>
-            <a class="link" href="https://www.google.com/">
-                <img src="https://www.google.com/favicon.ico" width="16" height="16">
-                 Replace Me
-            </a>
-            
-            <!-- Row 8 -->   
-            <a class="link" href="https://www.google.com/">
-                <img src="https://www.google.com/favicon.ico" width="16" height="16">
-                 Replace Me
-            </a>
-            <a class="link" href="https://www.google.com/">
-                <img src="https://www.google.com/favicon.ico" width="16" height="16">
-                 Replace Me
-            </a>
-            <a class="link" href="https://www.google.com/">
-                <img src="https://www.google.com/favicon.ico" width="16" height="16">
-                 Replace Me
-            </a>
-            <a class="link" href="https://www.google.com/">
-                <img src="https://www.google.com/favicon.ico" width="16" height="16">
-                 Replace Me
-            </a>
-        </div>
+            <div class="settings-section">
+                <h3>Config</h3>
+                <div class="row">
+                    <button id="export-config" class="ghost-button" type="button">Download config</button>
+                    <input id="import-config" type="file" accept=".json">
+                    <button id="reset-config" class="ghost-button" type="button">Reset defaults</button>
+                </div>
+            </div>
+        </aside>
 
-    <!-- Links that are important now but first to swap out -->
-    <h2>Tertiary</h2>
-        <div class="section">
-            <!-- Row 9 -->   
-            <a class="link" href="https://www.youtube.com/watch?v=r2iSxZGYvCs">
-                <img src="https://www.youtube.com/favicon.ico" width="16" height="16">
-                 Fireplace
-            </a>
-            <a class="link" href="https://www.youtube.com/watch?v=w6P-AaGwTMM">
-                <img src="https://www.youtube.com/favicon.ico" width="16" height="16">
-                 San Diego Pacific Beach
-            </a>
-            <a class="link" href="https://www.youtube.com/watch?v=jh_KFTYJnDo">
-                <img src="https://www.youtube.com/favicon.ico" width="16" height="16">
-                 Snowfall on a Lake
-            </a>
-            <a class="link" href="https://www.youtube.com/watch?v=BoCLdG2x594">
-                <img src="https://www.youtube.com/favicon.ico" width="16" height="16">
-                 Heavy Rain on Grass
-            </a>
-        </div>
+        <template id="link-row-template">
+            <div class="editor-row link-row" data-link-row>
+                <img class="icon-preview" alt="" width="24" height="24">
+                <label class="field field-name">
+                    Name
+                    <input data-field="name" type="text" placeholder="Display name">
+                </label>
+                <label class="field field-url">
+                    URL
+                    <input data-field="url" type="url" placeholder="https://">
+                </label>
+                <label class="field field-section">
+                    Section
+                    <input data-field="section" type="text" placeholder="Primary">
+                </label>
+                <label class="field field-icon">
+                    Icon override
+                    <input data-field="icon" type="file" accept="image/*">
+                </label>
+                <button data-action="remove-link" class="ghost-button" type="button">Remove</button>
+            </div>
+        </template>
+
+        <template id="background-row-template">
+            <div class="editor-row background-row" data-background-row>
+                <img class="thumb-preview" alt="">
+                <label class="field">
+                    Background URL
+                    <input data-field="background" type="text" placeholder="Image URL or data URL">
+                </label>
+                <button data-action="remove-background" class="ghost-button" type="button">Remove</button>
+            </div>
+        </template>
+
+        <template id="engine-row-template">
+            <div class="editor-row engine-row" data-engine-row>
+                <label class="field field-id">
+                    Id
+                    <input data-field="id" type="text" placeholder="google">
+                </label>
+                <label class="field field-label">
+                    Label
+                    <input data-field="label" type="text" placeholder="Google">
+                </label>
+                <label class="field field-url">
+                    Search URL
+                    <input data-field="url" type="text" placeholder="https://">
+                </label>
+                <label class="field field-query">
+                    Query param
+                    <input data-field="queryParam" type="text" placeholder="q">
+                </label>
+                <button data-action="remove-engine" class="ghost-button" type="button">Remove</button>
+            </div>
+        </template>
+
+        <script src="js/script.js"></script>
     </body>
 </html>

@@ -5,7 +5,7 @@ Mothership on Main
 ## Project Description
 
 Mothership on Main is a Chromium-enabled extension that replaces your home and new tab page with an efficient view.
-This is a work-in-progress project. It will require manual adjustments of elements to tailor to your liking, but a future vision of this will include interactive `Edit` buttons which will allow one to change elements from the frontend interface.
+This extension now ships with a built-in Customize panel so you can manage links, backgrounds, quotes, and search engines without editing HTML/JS manually.
 
 ![Image description](images/example.png)
 
@@ -26,28 +26,25 @@ The original inspiration came from a coworker pointing out that my clerical work
 
 1. Download this project in a location of your choosing
 
-2. Open index.html and update to your liking:
-    - Link references and images/favicons
-    - Section titles
-
-3. Open script.js and update to your liking:
-    - Texts array which display a quote per page load. If you update the entries in the array, they'll be cycled through
-    - Background images which set a different background image per page load. Must be in /images and must be referenced with file name
+2. Open the extension and click `Customize` to manage links, images, quotes, and search engines.
+    - Text config (links/quotes/search/sections) syncs via `chrome.storage.sync` across devices when available
+    - Uploaded images and favicon overrides stay local, but export/import includes them
+    - The default config lives in `config.json`
 
 4. In Edge/Chrome, go to `Settings`, `Manage Extensions`, `Load Unpacked` and select the folder you downloaded
     - Once selected, you'll see it pop up in the list of extensions, enabled
     - Open a new tab to confirm that it worked
 
-5. To modify in the future, you must remove the extension, make your updates and then reload it
+5. To modify in the future, open a new tab and click `Customize`
 
 ## Usage
 
 This extension does the following:
 - Replaces your home page and new tab page
-- Provides a multi-search window which allows you to choose from multiple search providers
+- Provides a config-backed multi-search window
 - Displays feedback/motivational text/notes/etc. on page load
-- Changes the background image on page load
-- Allows for efficient web browser usage with custom links by removing need for Bookmarks Toolbar (Disable with `Control + Shift + B`) and allowing fast opening of tab with `Control + T`
+- Changes the background image on page load (including uploads)
+- Allows for efficient web browser usage with custom links and favicon caching/overrides
 
 ## Contributing
 
