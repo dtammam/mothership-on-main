@@ -36,7 +36,7 @@
             </header>
 
             <section class="quote">
-                <h2>Feedback to Consider</h2>
+                <h2 id="quotes-title">Quotes</h2>
                 <p id="text-container"></p>
             </section>
 
@@ -55,6 +55,19 @@
             </div>
 
             <div class="settings-section">
+                <h3>Config</h3>
+                <div class="row">
+                    <button id="export-config" class="ghost-button" type="button">Download config</button>
+                    <label class="file-field">
+                        <span class="file-button">Choose file</span>
+                        <span id="import-config-name" class="file-name">No file chosen</span>
+                        <input id="import-config" type="file" accept=".json">
+                    </label>
+                    <button id="reset-config" class="ghost-button" type="button">Reset defaults</button>
+                </div>
+            </div>
+
+            <div class="settings-section">
                 <h3>Branding</h3>
                 <div class="row">
                     <label class="field branding-field">
@@ -65,19 +78,6 @@
                         Subheader
                         <input id="branding-subtitle" type="text" placeholder="Your favorite bookmark replacement tool">
                     </label>
-                </div>
-            </div>
-
-            <div class="settings-section">
-                <h3>Config</h3>
-                <div class="row">
-                    <button id="export-config" class="ghost-button" type="button">Download config</button>
-                    <label class="file-field">
-                        <span class="file-button">Choose file</span>
-                        <span id="import-config-name" class="file-name">No file chosen</span>
-                        <input id="import-config" type="file" accept=".json">
-                    </label>
-                    <button id="reset-config" class="ghost-button" type="button">Reset defaults</button>
                 </div>
             </div>
 
@@ -99,13 +99,17 @@
             </div>
 
             <div class="settings-section">
-                <h3>Layout</h3>
-                <div class="row">
-                    <label class="field">
-                        Max columns
-                        <input id="layout-max-columns" type="number" min="2" max="4" step="1">
-                    </label>
-                </div>
+                <h3>Quotes</h3>
+                <label class="field">
+                    Section title
+                    <input id="branding-quotes-title" type="text" placeholder="Quotes">
+                </label>
+                <textarea id="quotes-editor" rows="6" placeholder="One quote per line"></textarea>
+                <label class="file-field">
+                    <span class="file-button">Import quotes</span>
+                    <span id="quotes-upload-name" class="file-name">No file selected</span>
+                    <input id="quotes-upload" type="file" accept=".txt">
+                </label>
             </div>
 
             <div class="settings-section">
@@ -132,6 +136,16 @@
             </div>
 
             <div class="settings-section">
+                <h3>Layout</h3>
+                <div class="row">
+                    <label class="field">
+                        Max columns
+                        <input id="layout-max-columns" type="number" min="2" max="4" step="1">
+                    </label>
+                </div>
+            </div>
+
+            <div class="settings-section">
                 <h3>Links</h3>
                 <div id="links-editor" class="editor-list links-editor"></div>
                 <div class="row">
@@ -139,16 +153,6 @@
                     <input id="new-section-name" type="text" placeholder="New category name">
                     <button id="add-section" class="ghost-button" type="button">Add category</button>
                 </div>
-            </div>
-
-            <div class="settings-section">
-                <h3>Quotes</h3>
-                <textarea id="quotes-editor" rows="6" placeholder="One quote per line"></textarea>
-                <label class="file-field">
-                    <span class="file-button">Import quotes</span>
-                    <span id="quotes-upload-name" class="file-name">No file selected</span>
-                    <input id="quotes-upload" type="file" accept=".txt">
-                </label>
             </div>
             <div class="settings-footer">
                 <div class="footer-row">

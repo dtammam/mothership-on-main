@@ -1,7 +1,8 @@
 {
   "branding": {
     "title": "Mothership on Main",
-    "subtitle": "Your favorite bookmark replacement tool"
+    "subtitle": "Your favorite bookmark replacement tool",
+    "quotesTitle": "Quotes"
   },
   "sections": ["Primary", "Secondary", "Tertiary"],
   "links": [

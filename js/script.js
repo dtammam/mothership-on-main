@@ -12,7 +12,7 @@ const SYNC_META_KEY = "mothershipSyncMeta";
 const FAVICON_CACHE_KEY = "mothershipFaviconCache";
 
 const fallbackConfig = {
-    branding: { title: "Mothership on Main", subtitle: "Your favorite bookmark replacement tool" },
+    branding: { title: "Mothership on Main", subtitle: "Your favorite bookmark replacement tool", quotesTitle: "Quotes" },
     sections: ["Primary", "Secondary", "Tertiary"],
     links: [],
     quotes: [],
@@ -152,7 +152,8 @@ function mergeConfig(base, override) {
     return {
         branding: {
             title: override.branding?.title || base.branding.title,
-            subtitle: override.branding?.subtitle || base.branding.subtitle
+            subtitle: override.branding?.subtitle || base.branding.subtitle,
+            quotesTitle: override.branding?.quotesTitle || base.branding.quotesTitle
         },
         sections: Array.isArray(override.sections) ? override.sections : base.sections,
         links: Array.isArray(override.links) ? override.links : base.links,
@@ -199,11 +200,15 @@ function renderAll(config) {
 function renderBranding(branding) {
     const title = document.getElementById("title");
     const subtitle = document.getElementById("subtitle");
+    const quotesTitle = document.getElementById("quotes-title");
     if (title && branding?.title) {
         title.textContent = branding.title;
     }
     if (subtitle && branding?.subtitle) {
         subtitle.textContent = branding.subtitle;
+    }
+    if (quotesTitle && branding?.quotesTitle) {
+        quotesTitle.textContent = branding.quotesTitle;
     }
     if (branding?.title) {
         document.title = branding.title;
@@ -963,11 +968,15 @@ function renderBackgroundModeEditor(mode) {
 function renderBrandingEditor(branding) {
     const title = document.getElementById("branding-title");
     const subtitle = document.getElementById("branding-subtitle");
+    const quotesTitle = document.getElementById("branding-quotes-title");
     if (title) {
         title.value = branding?.title || "";
     }
     if (subtitle) {
         subtitle.value = branding?.subtitle || "";
+    }
+    if (quotesTitle) {
+        quotesTitle.value = branding?.quotesTitle || "";
     }
 }
 function renderLayoutEditor(layout) {
@@ -1413,7 +1422,8 @@ function collectBranding() {
     const title = document.getElementById("branding-title")?.value.trim() || "Mothership on Main";
     const subtitle =
         document.getElementById("branding-subtitle")?.value.trim() || "Your favorite bookmark replacement tool";
-    return { title, subtitle };
+    const quotesTitle = document.getElementById("branding-quotes-title")?.value.trim() || "Quotes";
+    return { title, subtitle, quotesTitle };
 }
 
 function splitConfig(config) {
