@@ -17,6 +17,7 @@ const fallbackConfig = {
     links: [],
     quotes: [],
     backgrounds: [],
+    backgroundMode: "gradient_dynamic",
     layout: { maxColumns: 4, minCardWidth: 180 },
     search: { defaultEngine: "google", engines: [] }
 };
@@ -157,6 +158,7 @@ function mergeConfig(base, override) {
         links: Array.isArray(override.links) ? override.links : base.links,
         quotes: Array.isArray(override.quotes) ? override.quotes : base.quotes,
         backgrounds: Array.isArray(override.backgrounds) ? override.backgrounds : base.backgrounds,
+        backgroundMode: override.backgroundMode || base.backgroundMode,
         layout: {
             maxColumns: Number.isFinite(override.layout?.maxColumns) ? override.layout.maxColumns : base.layout.maxColumns,
             minCardWidth: Number.isFinite(override.layout?.minCardWidth) ? override.layout.minCardWidth : base.layout.minCardWidth
@@ -189,7 +191,7 @@ function renderAll(config) {
     renderBranding(config.branding);
     renderSearch(config.search);
     renderQuote(config.quotes);
-    renderBackground(config.backgrounds);
+    renderBackground(config);
     renderSections(config);
     updateGridColumns(config.layout);
 }
@@ -249,8 +251,19 @@ function renderQuote(quotes) {
     textContainer.textContent = randomText;
 }
 
-function renderBackground(backgrounds) {
+function renderBackground(config) {
+    const mode = config.backgroundMode || "images";
+    if (mode === "images") {
+        renderImageBackground(config.backgrounds);
+        return;
+    }
+    document.body.style.backgroundImage = "";
+    applyGradientMode(mode);
+}
+
+function renderImageBackground(backgrounds) {
     if (!backgrounds.length) {
+        document.body.style.backgroundImage = "";
         return;
     }
     const random = backgrounds[Math.floor(Math.random() * backgrounds.length)];
@@ -284,6 +297,7 @@ function renderSections(config) {
 
         const header = document.createElement("div");
         header.className = "section-header";
+        header.dataset.drag = "section";
         const heading = document.createElement("h2");
         heading.textContent = section;
         const handle = document.createElement("button");
@@ -291,7 +305,7 @@ function renderSections(config) {
         handle.className = "section-handle";
         handle.dataset.drag = "section";
         handle.draggable = isRearranging;
-        handle.textContent = "Reorder";
+        handle.textContent = "Drag to reorder";
         header.appendChild(heading);
         header.appendChild(handle);
         sectionEl.appendChild(header);
@@ -381,6 +395,9 @@ async function resolveFavicon(link) {
         if (dataUrl) {
             faviconCache[host] = dataUrl;
             await storageLocal.set({ [FAVICON_CACHE_KEY]: faviconCache });
+            if (activeConfig?.backgroundMode === "gradient_dynamic") {
+                applyDynamicGradient();
+            }
             return dataUrl;
         }
     }
@@ -431,6 +448,7 @@ function setupSettings() {
     const addSection = document.getElementById("add-section");
     const newSectionName = document.getElementById("new-section-name");
     const addBackgroundUrl = document.getElementById("add-background-url");
+    const backgroundMode = document.getElementById("background-mode");
     const addEngine = document.getElementById("add-engine");
     const backgroundUpload = document.getElementById("background-upload");
     const backgroundUploadName = document.getElementById("background-upload-name");
@@ -487,11 +505,13 @@ function setupSettings() {
         setRearrangeMode(false);
     });
 
-    settingsCancel.addEventListener("click", () => {
-        settingsPanel.classList.remove("open");
-        settingsPanel.setAttribute("aria-hidden", "true");
-        setRearrangeMode(false);
-    });
+    if (settingsCancel) {
+        settingsCancel.addEventListener("click", () => {
+            settingsPanel.classList.remove("open");
+            settingsPanel.setAttribute("aria-hidden", "true");
+            setRearrangeMode(false);
+        });
+    }
 
     settingsCancelBottom.addEventListener("click", () => {
         settingsPanel.classList.remove("open");
@@ -499,10 +519,12 @@ function setupSettings() {
         setRearrangeMode(false);
     });
 
-    settingsSave.addEventListener("click", async () => {
-        await saveConfig(true);
-        setRearrangeMode(false);
-    });
+    if (settingsSave) {
+        settingsSave.addEventListener("click", async () => {
+            await saveConfig(true);
+            setRearrangeMode(false);
+        });
+    }
 
     settingsSaveBottom.addEventListener("click", async () => {
         await saveConfig(true);
@@ -546,7 +568,7 @@ function setupSettings() {
 
     backgroundUpload.addEventListener("change", async (event) => {
         const files = Array.from(event.target.files || []);
-        updateFileLabel(backgroundUploadName, files, "No files chosen");
+        updateFileLabel(backgroundUploadName, files, "No files selected");
         for (const file of files) {
             const dataUrl = await fileToDataUrl(file);
             addBackgroundRow(dataUrl);
@@ -559,7 +581,7 @@ function setupSettings() {
         if (!file) {
             return;
         }
-        updateFileLabel(quotesUploadName, [file], "No file chosen");
+        updateFileLabel(quotesUploadName, [file], "No file selected");
         const text = await file.text();
         const textarea = document.getElementById("quotes-editor");
         const existing = textarea.value ? `${textarea.value}\n` : "";
@@ -572,7 +594,7 @@ function setupSettings() {
         if (!file) {
             return;
         }
-        updateFileLabel(searchUploadName, [file], "No file chosen");
+        updateFileLabel(searchUploadName, [file], "No file selected");
         try {
             const payload = JSON.parse(await file.text());
             const imported = payload.engines ? payload : { engines: payload };
@@ -600,7 +622,7 @@ function setupSettings() {
         if (!file) {
             return;
         }
-        updateFileLabel(importConfigName, [file], "No file chosen");
+        updateFileLabel(importConfigName, [file], "No file selected");
         try {
             const payload = JSON.parse(await file.text());
             renderSettings(mergeConfig(activeConfig, payload));
@@ -642,6 +664,11 @@ function setupSettings() {
         const nextLayout = collectLayout();
         activeConfig = { ...activeConfig, layout: nextLayout };
         updateGridColumns(activeConfig.layout);
+    });
+
+    backgroundMode.addEventListener("change", () => {
+        activeConfig = { ...activeConfig, backgroundMode: backgroundMode.value };
+        renderBackground(activeConfig);
     });
 
     linksEditor.addEventListener("dragstart", (event) => {
@@ -819,6 +846,7 @@ function renderSettings(config) {
     renderSearchEditor(config.search);
     renderLayoutEditor(config.layout);
     renderBrandingEditor(config.branding);
+    renderBackgroundModeEditor(config.backgroundMode);
 }
 
 function renderLinksEditor(links) {
@@ -925,6 +953,13 @@ function renderSearchEditor(search) {
     refreshDefaultEngineOptions(search.defaultEngine);
 }
 
+function renderBackgroundModeEditor(mode) {
+    const select = document.getElementById("background-mode");
+    if (!select) {
+        return;
+    }
+    select.value = mode || "gradient_signature";
+}
 function renderBrandingEditor(branding) {
     const title = document.getElementById("branding-title");
     const subtitle = document.getElementById("branding-subtitle");
@@ -1030,12 +1065,14 @@ function collectConfigFromEditors() {
     const quotes = collectQuotes();
     const search = collectSearch();
     const layout = collectLayout();
+    const backgroundMode = collectBackgroundMode();
     return {
         branding,
         sections: sections.length ? sections : deriveSections(links, []),
         links,
         quotes,
         backgrounds,
+        backgroundMode,
         layout,
         search
     };
@@ -1221,6 +1258,10 @@ function collectLayout() {
     };
 }
 
+function collectBackgroundMode() {
+    const select = document.getElementById("background-mode");
+    return select?.value || "gradient_signature";
+}
 function updateFileLabel(labelEl, files, emptyLabel) {
     if (!labelEl) {
         return;
@@ -1234,6 +1275,132 @@ function updateFileLabel(labelEl, files, emptyLabel) {
         return;
     }
     labelEl.textContent = `${files.length} files selected`;
+}
+
+function applyGradientMode(mode) {
+    if (mode === "gradient_signature") {
+        applySignatureGradient();
+        return;
+    }
+    if (mode === "gradient_dynamic") {
+        applyDynamicGradient();
+        return;
+    }
+    applySignatureGradient();
+}
+
+function applySignatureGradient() {
+    const palette = [
+        [255, 138, 61],
+        [79, 172, 254],
+        [255, 200, 124],
+        [137, 247, 254]
+    ];
+    setAuraPalette(palette);
+}
+
+async function applyDynamicGradient() {
+    const sources = collectFaviconSources();
+    if (!sources.length) {
+        applySignatureGradient();
+        return;
+    }
+    const colors = await Promise.all(sources.slice(0, 6).map((src) => sampleDominantColor(src)));
+    const filtered = colors.filter(Boolean);
+    if (!filtered.length) {
+        applySignatureGradient();
+        return;
+    }
+    const unique = shuffleArray(filtered).slice(0, 4);
+    setAuraPalette(unique);
+}
+
+function collectFaviconSources() {
+    const sources = [];
+    if (faviconCache) {
+        Object.values(faviconCache).forEach((value) => {
+            if (isDataUrl(value)) {
+                sources.push(value);
+            }
+        });
+    }
+    if (activeConfig?.links) {
+        activeConfig.links.forEach((link) => {
+            if (isDataUrl(link.iconOverride)) {
+                sources.push(link.iconOverride);
+            }
+        });
+    }
+    return sources;
+}
+
+function setAuraPalette(colors) {
+    const root = document.documentElement;
+    const positions = [
+        [rand(12, 28), rand(8, 18)],
+        [rand(68, 88), rand(8, 22)],
+        [rand(10, 30), rand(62, 78)],
+        [rand(70, 88), rand(68, 88)]
+    ];
+    const slots = 4;
+    for (let i = 0; i < slots; i += 1) {
+        const color = colors[i] || colors[colors.length - 1];
+        if (!color) {
+            continue;
+        }
+        root.style.setProperty(`--aura-${i + 1}`, `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.24)`);
+        root.style.setProperty(`--aura-x${i + 1}`, `${positions[i][0]}%`);
+        root.style.setProperty(`--aura-y${i + 1}`, `${positions[i][1]}%`);
+    }
+}
+
+function rand(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+async function sampleDominantColor(source) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement("canvas");
+            const size = 24;
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, size, size);
+            const data = ctx.getImageData(0, 0, size, size).data;
+            let r = 0;
+            let g = 0;
+            let b = 0;
+            let count = 0;
+            for (let i = 0; i < data.length; i += 4) {
+                const alpha = data[i + 3];
+                if (alpha < 100) {
+                    continue;
+                }
+                r += data[i];
+                g += data[i + 1];
+                b += data[i + 2];
+                count += 1;
+            }
+            if (!count) {
+                resolve(null);
+                return;
+            }
+            resolve([Math.round(r / count), Math.round(g / count), Math.round(b / count)]);
+        };
+        img.onerror = () => resolve(null);
+        img.src = source;
+    });
+}
+
+function shuffleArray(list) {
+    const array = [...list];
+    for (let i = array.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
 }
 
 function collectSectionsFromEditor() {
