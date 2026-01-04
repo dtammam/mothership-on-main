@@ -149,13 +149,15 @@ function mergeConfig(base, override) {
     if (!override) {
         return structuredClone(base);
     }
+    const derivedSections = Array.isArray(override.links) ? deriveSections(override.links, []) : base.sections;
+    const nextSections = Array.isArray(override.sections) ? override.sections : derivedSections;
     return {
         branding: {
             title: override.branding?.title || base.branding.title,
             subtitle: override.branding?.subtitle || base.branding.subtitle,
             quotesTitle: override.branding?.quotesTitle || base.branding.quotesTitle
         },
-        sections: Array.isArray(override.sections) ? override.sections : base.sections,
+        sections: nextSections,
         links: Array.isArray(override.links) ? override.links : base.links,
         quotes: Array.isArray(override.quotes) ? override.quotes : base.quotes,
         backgrounds: Array.isArray(override.backgrounds) ? override.backgrounds : base.backgrounds,
@@ -468,6 +470,9 @@ function setupSettings() {
     const linksEditor = document.getElementById("links-editor");
     const sectionsContainer = document.getElementById("sections-container");
     const layoutMaxColumns = document.getElementById("layout-max-columns");
+    const settingsNav = document.querySelector(".settings-nav");
+
+    setupSettingsNav(settingsPanel, settingsNav);
 
     const saveConfig = async (closePanel) => {
         const nextConfig = collectConfigFromEditors();
@@ -841,6 +846,85 @@ function setupSettings() {
                 section?.remove();
             }
         }
+    });
+}
+
+function setupSettingsNav(panel, nav) {
+    if (!panel || !nav) {
+        return;
+    }
+    const links = Array.from(nav.querySelectorAll("a[href^=\"#settings-\"]"));
+    const sections = links
+        .map((link) => document.querySelector(link.getAttribute("href")))
+        .filter(Boolean);
+
+    if (!links.length || !sections.length) {
+        return;
+    }
+
+    const updateOffset = () => {
+        const topbar = panel.querySelector(".settings-topbar");
+        const offset = (topbar ? topbar.offsetHeight : nav.offsetHeight) + 16;
+        panel.style.setProperty("--settings-nav-offset", `${offset}px`);
+    };
+
+    const setActive = (id) => {
+        links.forEach((link) => {
+            const isActive = link.getAttribute("href") === `#${id}`;
+            link.classList.toggle("is-active", isActive);
+        });
+    };
+
+    const updateActiveFromScroll = () => {
+        const topbar = panel.querySelector(".settings-topbar");
+        const offset = (topbar ? topbar.offsetHeight : nav.offsetHeight) + 8;
+        const panelRect = panel.getBoundingClientRect();
+        let activeId = sections[0].id;
+        let smallestDistance = Number.POSITIVE_INFINITY;
+        sections.forEach((section) => {
+            const sectionRect = section.getBoundingClientRect();
+            const distance = Math.abs(sectionRect.top - panelRect.top - offset);
+            if (distance < smallestDistance) {
+                smallestDistance = distance;
+                activeId = section.id;
+            }
+        });
+        setActive(activeId);
+    };
+
+    let scrollRaf = null;
+    panel.addEventListener("scroll", () => {
+        if (scrollRaf) {
+            return;
+        }
+        scrollRaf = requestAnimationFrame(() => {
+            scrollRaf = null;
+            updateActiveFromScroll();
+        });
+    });
+
+    links.forEach((link) => {
+        link.addEventListener("click", (event) => {
+            event.preventDefault();
+            const target = document.querySelector(link.getAttribute("href"));
+            if (!target) {
+                return;
+            }
+            const topbar = panel.querySelector(".settings-topbar");
+            const offset = (topbar ? topbar.offsetHeight : nav.offsetHeight) + 12;
+            panel.scrollTo({
+                top: Math.max(0, target.offsetTop - offset),
+                behavior: "smooth"
+            });
+            setActive(target.id);
+        });
+    });
+
+    updateOffset();
+    updateActiveFromScroll();
+    window.addEventListener("resize", () => {
+        updateOffset();
+        updateActiveFromScroll();
     });
 }
 

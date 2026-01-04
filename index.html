@@ -44,17 +44,28 @@
         </main>
 
         <aside id="settings-panel" class="settings-panel" aria-hidden="true">
-            <div class="settings-header">
-                <div>
-                    <p class="eyebrow">Config control</p>
-                    <h2>Customize</h2>
+            <div class="settings-topbar">
+                <div class="settings-header">
+                    <div>
+                        <p class="eyebrow">Config control</p>
+                        <h2>Customize</h2>
+                    </div>
+                    <div class="sync-row">
+                        <span id="sync-status" class="sync-status">Sync: checking...</span>
+                    </div>
                 </div>
-            </div>
-            <div class="sync-row">
-                <span id="sync-status" class="sync-status">Sync: checking...</span>
+                <nav class="settings-nav" aria-label="Customize shortcuts">
+                    <a href="#settings-config">Config</a>
+                    <a href="#settings-branding">Branding</a>
+                    <a href="#settings-search">Search</a>
+                    <a href="#settings-quotes">Quotes</a>
+                    <a href="#settings-backgrounds">Backgrounds</a>
+                    <a href="#settings-layout">Layout</a>
+                    <a href="#settings-links">Links</a>
+                </nav>
             </div>
 
-            <div class="settings-section">
+            <div id="settings-config" class="settings-section">
                 <h3>Config</h3>
                 <div class="row">
                     <button id="export-config" class="ghost-button" type="button">Download config</button>
@@ -67,7 +78,7 @@
                 </div>
             </div>
 
-            <div class="settings-section">
+            <div id="settings-branding" class="settings-section">
                 <h3>Branding</h3>
                 <div class="row">
                     <label class="field branding-field">
@@ -81,7 +92,7 @@
                 </div>
             </div>
 
-            <div class="settings-section">
+            <div id="settings-search" class="settings-section">
                 <h3>Search</h3>
                 <div id="engines-editor" class="editor-list"></div>
                 <div class="row">
@@ -98,7 +109,7 @@
                 </label>
             </div>
 
-            <div class="settings-section">
+            <div id="settings-quotes" class="settings-section">
                 <h3>Quotes</h3>
                 <label class="field">
                     Section title
@@ -112,7 +123,7 @@
                 </label>
             </div>
 
-            <div class="settings-section">
+            <div id="settings-backgrounds" class="settings-section">
                 <h3>Backgrounds</h3>
                 <div class="row">
                     <label class="field">
@@ -135,7 +146,7 @@
                 </div>
             </div>
 
-            <div class="settings-section">
+            <div id="settings-layout" class="settings-section">
                 <h3>Layout</h3>
                 <div class="row">
                     <label class="field">
@@ -145,7 +156,7 @@
                 </div>
             </div>
 
-            <div class="settings-section">
+            <div id="settings-links" class="settings-section">
                 <h3>Links</h3>
                 <div id="links-editor" class="editor-list links-editor"></div>
                 <div class="row">
@@ -155,34 +166,32 @@
                 </div>
             </div>
             <div class="settings-footer">
-                <div class="footer-row">
-                    <div class="footer-links">
-                        <a class="footer-link" href="https://github.com/dtammam/mothership-on-main" target="_blank" rel="noopener" aria-label="GitHub repository">
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M12 2C6.48 2 2 6.58 2 12.26c0 4.53 2.87 8.38 6.84 9.74.5.1.68-.22.68-.48 0-.24-.01-.88-.01-1.72-2.78.62-3.37-1.37-3.37-1.37-.45-1.2-1.11-1.52-1.11-1.52-.9-.63.07-.62.07-.62 1 .07 1.52 1.06 1.52 1.06.89 1.56 2.34 1.11 2.91.85.09-.67.35-1.11.63-1.37-2.22-.26-4.56-1.15-4.56-5.1 0-1.13.39-2.05 1.03-2.78-.1-.26-.45-1.3.1-2.7 0 0 .85-.28 2.78 1.06a9.5 9.5 0 0 1 5.06 0c1.93-1.34 2.78-1.06 2.78-1.06.55 1.4.2 2.44.1 2.7.64.73 1.03 1.65 1.03 2.78 0 3.96-2.35 4.84-4.58 5.1.36.33.68.97.68 1.96 0 1.42-.01 2.56-.01 2.91 0 .27.18.59.69.48A10.24 10.24 0 0 0 22 12.26C22 6.58 17.52 2 12 2z"/>
-                            </svg>
-                        </a>
-                        <a class="footer-link" href="https://deantammam.substack.com/" target="_blank" rel="noopener" aria-label="Substack">
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M4 5h16v3H4V5zm0 5h16v3H4v-3zm0 5h16v3l-8 4-8-4v-3z"/>
-                            </svg>
-                        </a>
-                        <a class="footer-link" href="https://www.linkedin.com/in/dean-tammam-15b4775a" target="_blank" rel="noopener" aria-label="LinkedIn">
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M6.94 8.5H3.5V21h3.44V8.5zM5.22 3.5C4.1 3.5 3.2 4.4 3.2 5.5c0 1.1.9 2 2.02 2s2.02-.9 2.02-2c0-1.1-.9-2-2.02-2zM20.5 13.1c0-3.2-1.7-4.7-4-4.7-1.8 0-2.7 1-3.1 1.8h-.05V8.5H9.9V21h3.44v-6.2c0-1.6.3-3.1 2.3-3.1 2 0 2 1.9 2 3.2V21h3.46v-7.9z"/>
-                            </svg>
-                        </a>
-                        <a class="footer-link" href="https://chatgpt.com/features/codex" target="_blank" rel="noopener" aria-label="OpenAI">
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M22.27 8.81a4.9 4.9 0 0 0-2.1-2.1 5.03 5.03 0 0 0 .16-2.33 5.12 5.12 0 0 0-7.07-1.87 5.03 5.03 0 0 0-2.33-.16 4.9 4.9 0 0 0-2.1-2.1 5.12 5.12 0 0 0-7.07 7.07 4.9 4.9 0 0 0 2.1 2.1 5.03 5.03 0 0 0-.16 2.33 5.12 5.12 0 0 0 7.07 1.87 5.03 5.03 0 0 0 2.33.16 4.9 4.9 0 0 0 2.1 2.1 5.12 5.12 0 0 0 7.07-7.07 4.9 4.9 0 0 0-2.1-2.1 5.03 5.03 0 0 0 .16-2.33zM12 7.02a2.98 2.98 0 0 1 2.58 1.5 2.97 2.97 0 0 1-1.1 4.08 2.98 2.98 0 0 1-4.08-1.1 2.97 2.97 0 0 1 1.1-4.08A2.98 2.98 0 0 1 12 7.02z"/>
-                            </svg>
-                        </a>
-                        <span class="footer-credit">Designed and directed by Dean Tammam, implemented with Codex.</span>
-                    </div>
-                    <div class="footer-actions">
-                        <button id="settings-save-bottom" type="button">Save</button>
-                        <button id="settings-cancel-bottom" class="ghost-button" type="button">Cancel</button>
-                    </div>
+                <div class="footer-credit">Envisioned by Dean Tammam, implemented with Codex.</div>
+                <div class="footer-links">
+                    <a class="footer-link" href="https://github.com/dtammam/mothership-on-main" target="_blank" rel="noopener" aria-label="GitHub repository">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 2C6.48 2 2 6.58 2 12.26c0 4.53 2.87 8.38 6.84 9.74.5.1.68-.22.68-.48 0-.24-.01-.88-.01-1.72-2.78.62-3.37-1.37-3.37-1.37-.45-1.2-1.11-1.52-1.11-1.52-.9-.63.07-.62.07-.62 1 .07 1.52 1.06 1.52 1.06.89 1.56 2.34 1.11 2.91.85.09-.67.35-1.11.63-1.37-2.22-.26-4.56-1.15-4.56-5.1 0-1.13.39-2.05 1.03-2.78-.1-.26-.45-1.3.1-2.7 0 0 .85-.28 2.78 1.06a9.5 9.5 0 0 1 5.06 0c1.93-1.34 2.78-1.06 2.78-1.06.55 1.4.2 2.44.1 2.7.64.73 1.03 1.65 1.03 2.78 0 3.96-2.35 4.84-4.58 5.1.36.33.68.97.68 1.96 0 1.42-.01 2.56-.01 2.91 0 .27.18.59.69.48A10.24 10.24 0 0 0 22 12.26C22 6.58 17.52 2 12 2z"/>
+                        </svg>
+                    </a>
+                    <a class="footer-link" href="https://deantammam.substack.com/" target="_blank" rel="noopener" aria-label="Substack">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M4 5h16v3H4V5zm0 5h16v3H4v-3zm0 5h16v3l-8 4-8-4v-3z"/>
+                        </svg>
+                    </a>
+                    <a class="footer-link" href="https://www.linkedin.com/in/dean-tammam-15b4775a" target="_blank" rel="noopener" aria-label="LinkedIn">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M6.94 8.5H3.5V21h3.44V8.5zM5.22 3.5C4.1 3.5 3.2 4.4 3.2 5.5c0 1.1.9 2 2.02 2s2.02-.9 2.02-2c0-1.1-.9-2-2.02-2zM20.5 13.1c0-3.2-1.7-4.7-4-4.7-1.8 0-2.7 1-3.1 1.8h-.05V8.5H9.9V21h3.44v-6.2c0-1.6.3-3.1 2.3-3.1 2 0 2 1.9 2 3.2V21h3.46v-7.9z"/>
+                        </svg>
+                    </a>
+                    <a class="footer-link" href="https://chatgpt.com/features/codex" target="_blank" rel="noopener" aria-label="OpenAI">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M22.27 8.81a4.9 4.9 0 0 0-2.1-2.1 5.03 5.03 0 0 0 .16-2.33 5.12 5.12 0 0 0-7.07-1.87 5.03 5.03 0 0 0-2.33-.16 4.9 4.9 0 0 0-2.1-2.1 5.12 5.12 0 0 0-7.07 7.07 4.9 4.9 0 0 0 2.1 2.1 5.03 5.03 0 0 0-.16 2.33 5.12 5.12 0 0 0 7.07 1.87 5.03 5.03 0 0 0 2.33.16 4.9 4.9 0 0 0 2.1 2.1 5.12 5.12 0 0 0 7.07-7.07 4.9 4.9 0 0 0-2.1-2.1 5.03 5.03 0 0 0 .16-2.33zM12 7.02a2.98 2.98 0 0 1 2.58 1.5 2.97 2.97 0 0 1-1.1 4.08 2.98 2.98 0 0 1-4.08-1.1 2.97 2.97 0 0 1 1.1-4.08A2.98 2.98 0 0 1 12 7.02z"/>
+                        </svg>
+                    </a>
+                </div>
+                <div class="footer-actions">
+                    <button id="settings-save-bottom" type="button">Save</button>
+                    <button id="settings-cancel-bottom" class="ghost-button" type="button">Cancel</button>
                 </div>
             </div>
         </aside>
