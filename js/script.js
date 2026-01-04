@@ -10,6 +10,7 @@ const LOCAL_ASSETS_KEY = "mothershipLocalAssets";
 const LEGACY_KEY = "mothershipConfig";
 const SYNC_META_KEY = "mothershipSyncMeta";
 const FAVICON_CACHE_KEY = "mothershipFaviconCache";
+const BACKGROUND_THUMBS_KEY = "mothershipBackgroundThumbs";
 
 const fallbackConfig = {
     branding: { title: "Mothership on Main", subtitle: "Your favorite bookmark replacement tool", quotesTitle: "Quotes" },
@@ -84,11 +85,14 @@ const storageSync = {
 
 let activeConfig = null;
 let faviconCache = {};
+let backgroundThumbs = {};
 let isRearranging = false;
 let lastRenderLinks = [];
 let gridObserver = null;
 let currentDragType = "";
 let currentDragSection = null;
+let backgroundPreviewObserver = null;
+let backgroundPreviewPanel = null;
 
 document.addEventListener("DOMContentLoaded", () => {
     init().catch((error) => {
@@ -97,9 +101,14 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 async function init() {
-    const [config, cache] = await Promise.all([loadConfig(), storageLocal.get(FAVICON_CACHE_KEY)]);
+    const [config, cache, thumbs] = await Promise.all([
+        loadConfig(),
+        storageLocal.get(FAVICON_CACHE_KEY),
+        storageLocal.get(BACKGROUND_THUMBS_KEY)
+    ]);
     activeConfig = config;
     faviconCache = cache[FAVICON_CACHE_KEY] || {};
+    backgroundThumbs = thumbs[BACKGROUND_THUMBS_KEY] || {};
 
     renderAll(activeConfig);
     setupSettings();
@@ -261,9 +270,11 @@ function renderQuote(quotes) {
 function renderBackground(config) {
     const mode = config.backgroundMode || "images";
     if (mode === "images") {
+        document.body.classList.add("background-image");
         renderImageBackground(config.backgrounds);
         return;
     }
+    document.body.classList.remove("background-image");
     document.body.style.backgroundImage = "";
     applyGradientMode(mode);
 }
@@ -576,15 +587,16 @@ function setupSettings() {
         refreshDefaultEngineOptions();
     });
 
-    backgroundUpload.addEventListener("change", async (event) => {
-        const files = Array.from(event.target.files || []);
-        updateFileLabel(backgroundUploadName, files, "No files selected");
-        for (const file of files) {
-            const dataUrl = await fileToDataUrl(file);
-            addBackgroundRow(dataUrl);
-        }
-        event.target.value = "";
-    });
+        backgroundUpload.addEventListener("change", async (event) => {
+            const files = Array.from(event.target.files || []);
+            updateFileLabel(backgroundUploadName, files, "No files selected");
+            for (const file of files) {
+                const dataUrl = await fileToDataUrl(file);
+                addBackgroundRow(dataUrl);
+                storeBackgroundThumb(dataUrl);
+            }
+            event.target.value = "";
+        });
 
     quotesUpload.addEventListener("change", async (event) => {
         const file = event.target.files?.[0];
@@ -1023,6 +1035,7 @@ function renderBackgroundsEditor(backgrounds) {
     if (!backgrounds.length) {
         addBackgroundRow("", container, template);
     }
+    ensureBackgroundPreviewObserver(document.getElementById("settings-panel"));
 }
 
 function renderQuotesEditor(quotes) {
@@ -1114,8 +1127,102 @@ function addBackgroundRow(value, containerOverride, templateOverride) {
     row.dataset.backgroundValue = value || "";
     input.value = value || "";
     const preview = row.querySelector(".thumb-preview");
-    preview.src = value || "images/icon.png";
     container.appendChild(row);
+    queueBackgroundPreview(preview, value);
+}
+
+function ensureBackgroundPreviewObserver(panel) {
+    if (!panel || typeof IntersectionObserver === "undefined") {
+        return null;
+    }
+    if (backgroundPreviewObserver && backgroundPreviewPanel === panel) {
+        return backgroundPreviewObserver;
+    }
+    if (backgroundPreviewObserver) {
+        backgroundPreviewObserver.disconnect();
+    }
+    backgroundPreviewPanel = panel;
+    backgroundPreviewObserver = new IntersectionObserver(
+        (entries) => {
+            entries.forEach((entry) => {
+                if (!entry.isIntersecting) {
+                    return;
+                }
+                const img = entry.target;
+                const src = img.dataset.src;
+                if (src) {
+                    img.src = src;
+                    img.removeAttribute("data-src");
+                    if (isDataUrl(src)) {
+                        storeBackgroundThumb(src).then((thumb) => {
+                            if (thumb) {
+                                img.src = thumb;
+                            }
+                        });
+                    }
+                }
+                backgroundPreviewObserver.unobserve(img);
+            });
+        },
+        { root: panel, rootMargin: "200px 0px" }
+    );
+    return backgroundPreviewObserver;
+}
+
+function queueBackgroundPreview(preview, value) {
+    if (!preview) {
+        return;
+    }
+    if (!value) {
+        preview.src = "images/icon.png";
+        preview.removeAttribute("data-src");
+        return;
+    }
+    const thumb = getBackgroundThumb(value);
+    if (thumb) {
+        preview.src = thumb;
+        preview.removeAttribute("data-src");
+        return;
+    }
+    preview.src = "images/icon.png";
+    preview.dataset.src = value;
+    const panel = document.getElementById("settings-panel");
+    const observer = ensureBackgroundPreviewObserver(panel);
+    if (!observer) {
+        preview.src = value;
+        preview.removeAttribute("data-src");
+        return;
+    }
+    observer.observe(preview);
+}
+
+function getBackgroundThumb(value) {
+    if (!isDataUrl(value)) {
+        return "";
+    }
+    const key = getBackgroundThumbKey(value);
+    return backgroundThumbs[key] || "";
+}
+
+function getBackgroundThumbKey(value) {
+    return `bg_${hashString(value)}`;
+}
+
+async function storeBackgroundThumb(value) {
+    if (!isDataUrl(value)) {
+        return "";
+    }
+    const key = getBackgroundThumbKey(value);
+    if (backgroundThumbs[key]) {
+        return backgroundThumbs[key];
+    }
+    const thumb = await createImageThumbnail(value);
+    if (!thumb) {
+        return "";
+    }
+    backgroundThumbs = { ...backgroundThumbs, [key]: thumb };
+    await storageLocal.set({ [BACKGROUND_THUMBS_KEY]: backgroundThumbs });
+    return thumb;
 }
 
 function addEngineRow(engine, containerOverride, templateOverride) {
@@ -1620,6 +1727,40 @@ function createId() {
 
 function isDataUrl(value) {
     return typeof value === "string" && value.startsWith("data:");
+}
+
+function hashString(value) {
+    let hash = 2166136261;
+    for (let i = 0; i < value.length; i += 1) {
+        hash ^= value.charCodeAt(i);
+        hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+    }
+    return (hash >>> 0).toString(36);
+}
+
+function createImageThumbnail(dataUrl) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            const maxWidth = 240;
+            const maxHeight = 160;
+            const ratio = Math.min(maxWidth / img.width, maxHeight / img.height, 1);
+            const width = Math.round(img.width * ratio);
+            const height = Math.round(img.height * ratio);
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) {
+                resolve("");
+                return;
+            }
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL("image/jpeg", 0.72));
+        };
+        img.onerror = () => resolve("");
+        img.src = dataUrl;
+    });
 }
 
 async function handleIconUpload(input) {
