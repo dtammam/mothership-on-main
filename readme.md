@@ -5,7 +5,7 @@ A Chromium-enabled home and new tab replacement with a built-in Customize panel 
 <table>
     <tr>
         <td align="center">
-            <img src="images/Example.png" alt="Mothership on Main overview" width="520">
+            <img src="images/Default.png" alt="Mothership on Main overview" width="520">
         </td>
         <td align="center">
             <img src="images/Customize.png" alt="Customize panel" width="520">
