@@ -22,7 +22,7 @@ The original inspiration came from a coworker pointing out that my clerical work
 ## Highlights
 
 - New tab + home replacement with sections and rich link cards
-- Built-in Customize panel for config, backgrounds, search engines, and quotes
+- Built-in Customize panel with jump navigation, branding, quotes, backgrounds, search engines, and links
 - Favicon caching with overrides and a dynamic gradient background
 - Drag to reorder sections and links, including cross-section moves
 
@@ -46,9 +46,15 @@ The original inspiration came from a coworker pointing out that my clerical work
 This extension does the following:
 - Replaces your home page and new tab page
 - Provides a config-backed multi-search window
-- Displays feedback/motivational text/notes/etc. on page load
-- Changes the background image on page load (including uploads)
+- Displays quotes/notes on page load (brandable heading)
+- Changes the background image on page load (including uploads, with lightweight thumbnails in Customize)
 - Allows for efficient web browser usage with custom links and favicon caching/overrides
+
+## Customize tips
+
+- Use the jump pills at the top of Customize to hop between sections.
+- The Quotes heading can be renamed in Customize to match your brand voice.
+- Large background images are stored full-size, but the editor uses lightweight thumbnails for speed.
 
 ## License
 
