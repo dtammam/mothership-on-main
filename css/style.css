@@ -358,6 +358,12 @@ button:hover,
     padding: 12px 0 8px;
 }
 
+.settings-nav-actions {
+    display: inline-flex;
+    gap: 8px;
+    margin-left: 16px;
+}
+
 .settings-nav a {
     display: inline-flex;
     align-items: center;
@@ -373,7 +379,27 @@ button:hover,
     text-transform: uppercase;
 }
 
+.settings-nav button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(16, 18, 28, 0.8);
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
 .settings-nav a:hover {
+    border-color: var(--accent);
+    color: var(--text);
+}
+
+.settings-nav button:hover {
     border-color: var(--accent);
     color: var(--text);
 }

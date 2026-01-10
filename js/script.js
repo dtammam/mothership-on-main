@@ -563,6 +563,29 @@ function setupSettings() {
         if (!action) {
             return;
         }
+        if (action === "quick-add-link") {
+            const row = addLinkRow();
+            const section = document.getElementById("settings-links");
+            section?.scrollIntoView({ block: "start" });
+            row?.querySelector('[data-field="name"]')?.focus();
+        }
+        if (action === "quick-add-section") {
+            const sectionName = window.prompt("New category name");
+            if (!sectionName) {
+                return;
+            }
+            ensureLinksSection(sectionName);
+            const section = document.querySelector(`[data-section-block][data-section="${sectionName}"]`);
+            section?.scrollIntoView({ block: "start" });
+        }
+        if (action === "quick-add-engine") {
+            addEngineRow({ id: "", label: "", url: "", queryParam: "q" });
+            refreshDefaultEngineOptions();
+            const section = document.getElementById("settings-search");
+            section?.scrollIntoView({ block: "start" });
+            const lastEngine = document.querySelector("#engines-editor [data-engine-row]:last-child");
+            lastEngine?.querySelector('[data-field="id"]')?.focus();
+        }
         if (action === "remove-link") {
             event.target.closest("[data-link-row]")?.remove();
         }
@@ -612,8 +635,7 @@ function setupSettings() {
         updateFileLabel(quotesUploadName, [file], "No file selected");
         const text = await file.text();
         const textarea = document.getElementById("quotes-editor");
-        const existing = textarea.value ? `${textarea.value}\n` : "";
-        textarea.value = `${existing}${text}`.trim();
+        textarea.value = text.trim();
         event.target.value = "";
     });
 
@@ -1114,6 +1136,7 @@ function addLinkRow(sectionName) {
         container.appendChild(row);
     }
     updateLinkRowDragState();
+    return row;
 }
 
 function addBackgroundRow(value, containerOverride, templateOverride) {
