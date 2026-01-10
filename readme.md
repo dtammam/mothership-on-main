@@ -59,15 +59,6 @@ This extension does the following:
 - The Quotes heading can be renamed in Customize to match your brand voice.
 - Large background images are stored full-size, but the editor uses lightweight thumbnails for speed.
 
-## Testing checklist
-
-- Load the extension as unpacked and open a new tab; confirm the page renders without errors.
-- Search: submit a query and verify it opens in the same tab.
-- Links: click a link and verify it opens in the same tab; switch to Rearrange and move links/sections, then Finish.
-- Customize: add a link, category, and search engine from the top pills; reorder links inside Customize.
-- Import/export: export config, then import it; import quotes and confirm they replace existing lines.
-- Backgrounds: switch between gradients, uploaded images, and blurred images; upload an image and confirm the dropdown switches to Uploaded images.
-
 ## License
 
 [MIT](license)

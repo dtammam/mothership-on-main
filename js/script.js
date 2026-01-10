@@ -19,7 +19,7 @@ const fallbackConfig = {
     links: [],
     quotes: [],
     backgrounds: [],
-    backgroundMode: "gradient_dynamic",
+    backgroundMode: "gradient_signature",
     layout: { maxColumns: 4, minCardWidth: 180 },
     search: { defaultEngine: "google", engines: [] }
 };
@@ -489,11 +489,10 @@ function setupSettings() {
     const backgroundUploadName = document.getElementById("background-upload-name");
     const quotesUpload = document.getElementById("quotes-upload");
     const quotesUploadName = document.getElementById("quotes-upload-name");
-    const searchUpload = document.getElementById("search-upload");
-    const searchUploadName = document.getElementById("search-upload-name");
     const exportConfig = document.getElementById("export-config");
     const importConfig = document.getElementById("import-config");
     const importConfigName = document.getElementById("import-config-name");
+    const importConfigMode = document.getElementById("import-config-mode");
     const resetConfig = document.getElementById("reset-config");
     const linksEditor = document.getElementById("links-editor");
     const sectionsContainer = document.getElementById("sections-container");
@@ -706,23 +705,6 @@ function setupSettings() {
         event.target.value = "";
     });
 
-    searchUpload.addEventListener("change", async (event) => {
-        const file = event.target.files?.[0];
-        if (!file) {
-            return;
-        }
-        updateFileLabel(searchUploadName, [file], "No file selected");
-        try {
-            const payload = JSON.parse(await file.text());
-            const imported = payload.engines ? payload : { engines: payload };
-            renderSettings(mergeConfig(activeConfig, { search: imported }));
-        } catch (error) {
-            console.error("Invalid search config");
-        } finally {
-            event.target.value = "";
-        }
-    });
-
     exportConfig.addEventListener("click", () => {
         const config = collectConfigFromEditors();
         const data = JSON.stringify(config, null, 2);
@@ -748,7 +730,35 @@ function setupSettings() {
         updateFileLabel(importConfigName, [file], "No file selected");
         try {
             const payload = JSON.parse(await file.text());
-            renderSettings(mergeConfig(activeConfig, payload));
+            const baseConfig = collectConfigFromEditors();
+            const mode = importConfigMode?.value || "all";
+            if (mode === "quotes") {
+                const quotes = normalizeQuotesImport(payload);
+                renderSettings(mergeConfig(baseConfig, { quotes }));
+                return;
+            }
+            if (mode === "search") {
+                const search =
+                    payload.search ||
+                    (payload.engines ? payload : Array.isArray(payload) ? { engines: payload } : null);
+                if (!search) {
+                    console.error("Invalid search config");
+                    return;
+                }
+                renderSettings(mergeConfig(baseConfig, { search }));
+                return;
+            }
+            if (mode === "links") {
+                const links = Array.isArray(payload.links) ? payload.links : Array.isArray(payload) ? payload : [];
+                const sections = Array.isArray(payload.sections) ? payload.sections : [];
+                const update = { links };
+                if (sections.length) {
+                    update.sections = sections;
+                }
+                renderSettings(mergeConfig(baseConfig, update));
+                return;
+            }
+            renderSettings(mergeConfig(baseConfig, payload));
         } catch (error) {
             console.error("Invalid config file");
         } finally {
@@ -1050,6 +1060,32 @@ function renderSettings(config) {
     renderBrandingEditor(config.branding);
     renderBackgroundModeEditor(config.backgroundMode);
 }
+
+function normalizeQuotesImport(payload) {
+    if (Array.isArray(payload)) {
+        return payload.filter((line) => typeof line === "string").map((line) => line.trim()).filter(Boolean);
+    }
+    if (typeof payload === "string") {
+        return payload
+            .split("\n")
+            .map((line) => line.trim())
+            .filter(Boolean);
+    }
+    if (Array.isArray(payload?.quotes)) {
+        return payload.quotes
+            .filter((line) => typeof line === "string")
+            .map((line) => line.trim())
+            .filter(Boolean);
+    }
+    if (typeof payload?.quotes === "string") {
+        return payload.quotes
+            .split("\n")
+            .map((line) => line.trim())
+            .filter(Boolean);
+    }
+    return [];
+}
+
 
 function renderLinksEditor(links, sectionsOverride) {
     const container = document.getElementById("links-editor");

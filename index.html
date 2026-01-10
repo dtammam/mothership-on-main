@@ -79,6 +79,15 @@
                 <h3>Config</h3>
                 <div class="row">
                     <button id="export-config" class="ghost-button" type="button">Download config</button>
+                    <label class="field">
+                        Import mode
+                        <select id="import-config-mode">
+                            <option value="all">Import all</option>
+                            <option value="quotes">Import quotes</option>
+                            <option value="search">Import searches</option>
+                            <option value="links">Import links</option>
+                        </select>
+                    </label>
                     <label class="file-field">
                         <span class="file-button">Choose file</span>
                         <span id="import-config-name" class="file-name">No file chosen</span>
@@ -112,11 +121,6 @@
                         <select id="default-engine"></select>
                     </label>
                 </div>
-                <label class="file-field">
-                    <span class="file-button">Import engines</span>
-                    <span id="search-upload-name" class="file-name">No file selected</span>
-                    <input id="search-upload" type="file" accept=".json">
-                </label>
             </div>
 
             <div id="settings-quotes" class="settings-section">
