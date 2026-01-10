@@ -1574,6 +1574,30 @@ function applyGradientMode(mode) {
         applyDynamicGradient();
         return;
     }
+    if (mode === "gradient_soda") {
+        applySodaGradient();
+        return;
+    }
+    if (mode === "gradient_github_dark") {
+        applyGithubDarkGradient();
+        return;
+    }
+    if (mode === "gradient_azure") {
+        applyAzureGradient();
+        return;
+    }
+    if (mode === "gradient_dracula") {
+        applyDraculaGradient();
+        return;
+    }
+    if (mode === "gradient_synthwave") {
+        applySynthwaveGradient();
+        return;
+    }
+    if (mode === "gradient_daylight") {
+        applyDaylightGradient();
+        return;
+    }
     applySignatureGradient();
 }
 
@@ -1583,6 +1607,66 @@ function applySignatureGradient() {
         [79, 172, 254],
         [255, 200, 124],
         [137, 247, 254]
+    ];
+    setAuraPalette(palette);
+}
+
+function applySodaGradient() {
+    const palette = [
+        [116, 255, 216],
+        [94, 215, 255],
+        [255, 120, 164],
+        [255, 212, 88]
+    ];
+    setAuraPalette(palette);
+}
+
+function applyGithubDarkGradient() {
+    const palette = [
+        [13, 17, 23],
+        [22, 27, 34],
+        [48, 54, 61],
+        [88, 96, 105]
+    ];
+    setAuraPalette(palette);
+}
+
+function applyAzureGradient() {
+    const palette = [
+        [0, 120, 212],
+        [0, 91, 172],
+        [80, 188, 255],
+        [0, 183, 255]
+    ];
+    setAuraPalette(palette);
+}
+
+function applyDraculaGradient() {
+    const palette = [
+        [40, 42, 54],
+        [68, 71, 90],
+        [189, 147, 249],
+        [255, 121, 198]
+    ];
+    setAuraPalette(palette);
+}
+
+function applySynthwaveGradient() {
+    const palette = [
+        [255, 98, 196],
+        [138, 99, 255],
+        [79, 230, 255],
+        [255, 197, 109]
+    ];
+    setAuraPalette(palette);
+}
+
+function applyDaylightGradient() {
+    const palette = [
+        [255, 241, 198],
+        [255, 214, 170],
+        [255, 170, 204],
+        [186, 233, 255]
     ];
     setAuraPalette(palette);
 }
@@ -1599,7 +1683,8 @@ async function applyDynamicGradient() {
         applySignatureGradient();
         return;
     }
-    const unique = shuffleArray(filtered).slice(0, 4);
+    const boosted = filtered.map((color) => boostColor(color, 0.3));
+    const unique = shuffleArray(boosted).slice(0, 4);
     setAuraPalette(unique);
 }
 
@@ -1689,6 +1774,10 @@ function shuffleArray(list) {
         [array[i], array[j]] = [array[j], array[i]];
     }
     return array;
+}
+
+function boostColor(color, amount) {
+    return color.map((channel) => Math.min(255, Math.max(0, Math.round(channel + (255 - channel) * amount))));
 }
 
 function collectSectionsFromEditor() {
