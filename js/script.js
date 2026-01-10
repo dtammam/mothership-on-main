@@ -11,10 +11,11 @@ const LEGACY_KEY = "mothershipConfig";
 const SYNC_META_KEY = "mothershipSyncMeta";
 const FAVICON_CACHE_KEY = "mothershipFaviconCache";
 const BACKGROUND_THUMBS_KEY = "mothershipBackgroundThumbs";
+const DEFAULT_LINK_SECTION = "Links";
 
 const fallbackConfig = {
     branding: { title: "Mothership on Main", subtitle: "Your favorite bookmark replacement tool", quotesTitle: "Quotes" },
-    sections: ["Primary", "Secondary", "Tertiary"],
+    sections: [DEFAULT_LINK_SECTION],
     links: [],
     quotes: [],
     backgrounds: [],
@@ -93,6 +94,7 @@ let currentDragType = "";
 let currentDragSection = null;
 let backgroundPreviewObserver = null;
 let backgroundPreviewPanel = null;
+let canRearrangeEditor = () => false;
 
 document.addEventListener("DOMContentLoaded", () => {
     init().catch((error) => {
@@ -297,7 +299,7 @@ function renderSections(config) {
     const linksBySection = new Map();
     sections.forEach((section) => linksBySection.set(section, []));
     lastRenderLinks.forEach((link) => {
-        const section = link.section || "Links";
+        const section = link.section || DEFAULT_LINK_SECTION;
         if (!linksBySection.has(section)) {
             linksBySection.set(section, []);
         }
@@ -336,8 +338,7 @@ function renderSections(config) {
             const card = document.createElement("a");
             card.className = "link-card";
             card.href = link.url;
-            card.target = "_blank";
-            card.rel = "noopener";
+            card.target = "_self";
             card.dataset.linkId = link.id;
             card.dataset.section = section;
             card.draggable = isRearranging;
@@ -385,7 +386,7 @@ function deriveSections(links, existingSections) {
         });
     }
     links.forEach((link) => {
-        const section = link.section || "Links";
+        const section = link.section || DEFAULT_LINK_SECTION;
         if (!seen.has(section)) {
             ordered.push(section);
             seen.add(section);
@@ -484,6 +485,7 @@ function setupSettings() {
     const settingsNav = document.querySelector(".settings-nav");
 
     setupSettingsNav(settingsPanel, settingsNav);
+    canRearrangeEditor = () => settingsPanel.classList.contains("open");
 
     const saveConfig = async (closePanel) => {
         const nextConfig = collectConfigFromEditors();
@@ -509,12 +511,14 @@ function setupSettings() {
             settingsPanel.classList.remove("open");
             settingsPanel.setAttribute("aria-hidden", "true");
             setRearrangeMode(false);
+            updateLinkRowDragState();
             return;
         }
         setRearrangeMode(false);
         renderSettings(activeConfig);
         settingsPanel.classList.add("open");
         settingsPanel.setAttribute("aria-hidden", "false");
+        updateLinkRowDragState();
     });
 
     rearrangeToggle.addEventListener("click", async () => {
@@ -531,6 +535,7 @@ function setupSettings() {
             settingsPanel.classList.remove("open");
             settingsPanel.setAttribute("aria-hidden", "true");
             setRearrangeMode(false);
+            updateLinkRowDragState();
         });
     }
 
@@ -538,6 +543,7 @@ function setupSettings() {
         settingsPanel.classList.remove("open");
         settingsPanel.setAttribute("aria-hidden", "true");
         setRearrangeMode(false);
+        updateLinkRowDragState();
     });
 
     if (settingsSave) {
@@ -694,7 +700,7 @@ function setupSettings() {
     });
 
     linksEditor.addEventListener("dragstart", (event) => {
-        if (!isRearranging) {
+        if (!isRearranging && !canRearrangeEditor()) {
             return;
         }
         const row = event.target.closest("[data-link-row]");
@@ -714,7 +720,7 @@ function setupSettings() {
     });
 
     linksEditor.addEventListener("dragover", (event) => {
-        if (!isRearranging) {
+        if (!isRearranging && !canRearrangeEditor()) {
             return;
         }
         const list = event.target.closest("[data-section-list]");
@@ -730,7 +736,7 @@ function setupSettings() {
     });
 
     linksEditor.addEventListener("drop", (event) => {
-        if (!isRearranging) {
+        if (!isRearranging && !canRearrangeEditor()) {
             return;
         }
         const list = event.target.closest("[data-section-list]");
@@ -941,7 +947,7 @@ function setupSettingsNav(panel, nav) {
 }
 
 function renderSettings(config) {
-    renderLinksEditor(config.links);
+    renderLinksEditor(config.links, config.sections);
     renderBackgroundsEditor(config.backgrounds);
     renderQuotesEditor(config.quotes);
     renderSearchEditor(config.search);
@@ -950,11 +956,11 @@ function renderSettings(config) {
     renderBackgroundModeEditor(config.backgroundMode);
 }
 
-function renderLinksEditor(links) {
+function renderLinksEditor(links, sectionsOverride) {
     const container = document.getElementById("links-editor");
     const template = document.getElementById("link-row-template");
     container.innerHTML = "";
-    const sections = deriveSections(links, activeConfig?.sections || []);
+    const sections = deriveSections(links, sectionsOverride || []);
     const sectionBlocks = new Map();
 
     const ensureSection = (sectionName) => {
@@ -967,7 +973,7 @@ function renderLinksEditor(links) {
     };
 
     if (!sections.length) {
-        sections.push("Links");
+        sections.push(DEFAULT_LINK_SECTION);
     }
 
     sections.forEach((section) => ensureSection(section));
@@ -978,18 +984,23 @@ function renderLinksEditor(links) {
         row.dataset.iconOverride = link.iconOverride || "";
         row.querySelector('[data-field="name"]').value = link.name || "";
         row.querySelector('[data-field="url"]').value = link.url || "";
-        row.querySelector('[data-field="section"]').value = link.section || sections[0];
+        row.querySelector('[data-field="section"]').value = link.section || DEFAULT_LINK_SECTION;
         const preview = row.querySelector(".icon-preview");
         preview.src = link.iconOverride || "images/icon.png";
         row.draggable = isRearranging;
-        const sectionName = link.section || sections[0];
+        const sectionName = link.section || DEFAULT_LINK_SECTION;
         const list = ensureSection(sectionName);
         list.appendChild(row);
     });
     if (!links.length) {
-        addLinkRow(sections[0]);
+        addLinkRow(DEFAULT_LINK_SECTION);
     }
     updateLinkRowDragState();
+}
+
+function getDefaultLinkSectionFromMain() {
+    const firstSection = document.querySelector("#sections-container .section");
+    return firstSection?.dataset.section || DEFAULT_LINK_SECTION;
 }
 
 function ensureLinksSection(sectionName) {
@@ -1085,34 +1096,20 @@ function renderLayoutEditor(layout) {
 function addLinkRow(sectionName) {
     const container = document.getElementById("links-editor");
     const template = document.getElementById("link-row-template");
-    const sectionList =
-        (sectionName && container.querySelector(`[data-section-list][data-section="${sectionName}"]`)) ||
-        container.querySelector("[data-section-list]");
-    if (!sectionList) {
-        const section = document.createElement("div");
-        section.className = "links-section";
-        section.dataset.section = sectionName || "Links";
-        const heading = document.createElement("h4");
-        heading.textContent = sectionName || "Links";
-        const list = document.createElement("div");
-        list.className = "section-list";
-        list.dataset.sectionList = "true";
-        list.dataset.section = sectionName || "Links";
-        section.appendChild(heading);
-        section.appendChild(list);
-        container.appendChild(section);
-    }
+    const resolvedSection = sectionName || getDefaultLinkSectionFromMain();
+    ensureLinksSection(resolvedSection);
     const targetList =
-        (sectionName && container.querySelector(`[data-section-list][data-section="${sectionName}"]`)) ||
+        container.querySelector(`[data-section-list][data-section="${resolvedSection}"]`) ||
         container.querySelector("[data-section-list]");
     const row = template.content.firstElementChild.cloneNode(true);
     row.dataset.linkId = createId();
     row.dataset.iconOverride = "";
     row.querySelector(".icon-preview").src = "images/icon.png";
-    row.querySelector('[data-field="section"]').value = sectionName || "Links";
-    row.draggable = isRearranging;
+    row.querySelector('[data-field="section"]').value = resolvedSection;
+    row.draggable = isRearranging || canRearrangeEditor();
     if (targetList) {
-        targetList.appendChild(row);
+        targetList.prepend(row);
+        row.scrollIntoView({ block: "nearest" });
     } else {
         container.appendChild(row);
     }
@@ -1297,7 +1294,7 @@ function collectLinks() {
             id,
             name: name || url,
             url,
-            section: section || "Links",
+            section: section || DEFAULT_LINK_SECTION,
             iconOverride
         });
     });
@@ -1326,8 +1323,9 @@ function setRearrangeMode(enabled) {
 }
 
 function updateLinkRowDragState() {
+    const allowDrag = isRearranging || canRearrangeEditor();
     document.querySelectorAll("[data-link-row]").forEach((row) => {
-        row.draggable = isRearranging;
+        row.draggable = allowDrag;
     });
 }
 
@@ -1394,7 +1392,7 @@ function collectLinksFromMain() {
     const links = [];
     const grids = document.querySelectorAll(".links-grid");
     grids.forEach((grid) => {
-        const section = grid.dataset.section || "Links";
+        const section = grid.dataset.section || DEFAULT_LINK_SECTION;
         grid.querySelectorAll(".link-card").forEach((card) => {
             const link = lastRenderLinks.find((item) => item.id === card.dataset.linkId);
             if (link) {

@@ -28,7 +28,7 @@
                     </div>
                 </div>
 
-                <form id="search-form" action="" method="get" target="_blank">
+                <form id="search-form" action="" method="get">
                     <select id="search-engine" aria-label="Search engine"></select>
                     <input id="search-input" type="text" name="q" placeholder="Find what you're looking for" required>
                     <button type="submit">Search</button>
@@ -209,13 +209,13 @@
                 </label>
                 <label class="field field-section">
                     Section
-                    <input data-field="section" type="text" placeholder="Primary">
+                    <input data-field="section" type="text" placeholder="Links">
                 </label>
                 <label class="field field-icon">
                     Icon override
                     <input data-field="icon" type="file" accept="image/*">
                 </label>
-                <button data-action="remove-link" class="ghost-button" type="button">Remove</button>
+                <button data-action="remove-link" class="link-row-remove" type="button" aria-label="Remove link">X</button>
             </div>
         </template>
 

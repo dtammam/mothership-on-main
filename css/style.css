@@ -572,6 +572,10 @@ button:hover,
     cursor: grab;
 }
 
+.settings-panel.open .link-row {
+    cursor: grab;
+}
+
 .link-row.dragging {
     opacity: 0.5;
 }
@@ -639,6 +643,21 @@ button:hover,
     gap: 12px;
 }
 
+.link-row {
+    position: relative;
+    padding: 12px;
+    border-radius: var(--radius-tight);
+    border: 1px solid transparent;
+    background: rgba(12, 14, 22, 0.55);
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.link-row:hover,
+.link-row:focus-within {
+    border-color: var(--accent);
+    background: rgba(23, 28, 42, 0.7);
+}
+
 .link-row > *,
 .engine-row > * {
     min-width: 0;
@@ -662,6 +681,32 @@ button:hover,
 
 .link-row .field-icon {
     flex: 1 1 220px;
+}
+
+.link-row-remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(10, 12, 20, 0.9);
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    padding: 0;
+}
+
+.link-row:hover .link-row-remove,
+.link-row:focus-within .link-row-remove {
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .link-row button,

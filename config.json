@@ -4,18 +4,18 @@
     "subtitle": "Your favorite bookmark replacement tool",
     "quotesTitle": "Quotes"
   },
-  "sections": ["Primary", "Secondary", "Tertiary"],
+  "sections": ["Links"],
   "links": [
-    { "section": "Primary", "name": "Gmail", "url": "https://mail.google.com/", "iconOverride": "" },
-    { "section": "Primary", "name": "Google Calendar", "url": "https://calendar.google.com/", "iconOverride": "" },
-    { "section": "Primary", "name": "Google Drive", "url": "https://drive.google.com/", "iconOverride": "" },
-    { "section": "Primary", "name": "Google Docs", "url": "https://docs.google.com/", "iconOverride": "" },
-    { "section": "Secondary", "name": "GitHub", "url": "https://github.com/", "iconOverride": "" },
-    { "section": "Secondary", "name": "Stack Overflow", "url": "https://stackoverflow.com/", "iconOverride": "" },
-    { "section": "Secondary", "name": "YouTube", "url": "https://www.youtube.com/", "iconOverride": "" },
-    { "section": "Secondary", "name": "Wikipedia", "url": "https://en.wikipedia.org/", "iconOverride": "" },
-    { "section": "Tertiary", "name": "Fireplace", "url": "https://www.youtube.com/watch?v=r2iSxZGYvCs", "iconOverride": "" },
-    { "section": "Tertiary", "name": "San Diego Pacific Beach", "url": "https://www.youtube.com/watch?v=w6P-AaGwTMM", "iconOverride": "" }
+    { "section": "Links", "name": "Gmail", "url": "https://mail.google.com/", "iconOverride": "" },
+    { "section": "Links", "name": "Google Calendar", "url": "https://calendar.google.com/", "iconOverride": "" },
+    { "section": "Links", "name": "Google Drive", "url": "https://drive.google.com/", "iconOverride": "" },
+    { "section": "Links", "name": "Google Docs", "url": "https://docs.google.com/", "iconOverride": "" },
+    { "section": "Links", "name": "GitHub", "url": "https://github.com/", "iconOverride": "" },
+    { "section": "Links", "name": "Stack Overflow", "url": "https://stackoverflow.com/", "iconOverride": "" },
+    { "section": "Links", "name": "YouTube", "url": "https://www.youtube.com/", "iconOverride": "" },
+    { "section": "Links", "name": "Wikipedia", "url": "https://en.wikipedia.org/", "iconOverride": "" },
+    { "section": "Links", "name": "Fireplace", "url": "https://www.youtube.com/watch?v=r2iSxZGYvCs", "iconOverride": "" },
+    { "section": "Links", "name": "San Diego Pacific Beach", "url": "https://www.youtube.com/watch?v=w6P-AaGwTMM", "iconOverride": "" }
   ],
   "quotes": [
     "Technology is incredible!",
