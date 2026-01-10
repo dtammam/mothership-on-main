@@ -483,6 +483,8 @@ function setupSettings() {
     const sectionsContainer = document.getElementById("sections-container");
     const layoutMaxColumns = document.getElementById("layout-max-columns");
     const settingsNav = document.querySelector(".settings-nav");
+    const quickSectionForm = document.querySelector("[data-nav-popover]");
+    const quickSectionInput = document.getElementById("quick-section-name");
 
     setupSettingsNav(settingsPanel, settingsNav);
     canRearrangeEditor = () => settingsPanel.classList.contains("open");
@@ -570,13 +572,19 @@ function setupSettings() {
             row?.querySelector('[data-field="name"]')?.focus();
         }
         if (action === "quick-add-section") {
-            const sectionName = window.prompt("New category name");
-            if (!sectionName) {
+            if (quickSectionForm) {
+                quickSectionForm.classList.toggle("is-open");
+            }
+            quickSectionInput?.focus({ preventScroll: true });
+        }
+        if (action === "quick-cancel-section") {
+            if (!quickSectionForm) {
                 return;
             }
-            ensureLinksSection(sectionName);
-            const section = document.querySelector(`[data-section-block][data-section="${sectionName}"]`);
-            section?.scrollIntoView({ block: "start" });
+            quickSectionForm.classList.remove("is-open");
+            if (quickSectionInput) {
+                quickSectionInput.value = "";
+            }
         }
         if (action === "quick-add-engine") {
             addEngineRow({ id: "", label: "", url: "", queryParam: "q" });
@@ -598,6 +606,44 @@ function setupSettings() {
         }
         if (action === "remove-section") {
             event.target.closest("[data-section-block]")?.remove();
+        }
+    });
+
+    if (quickSectionForm && quickSectionInput) {
+        quickSectionForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            const sectionName = quickSectionInput.value.trim();
+            if (!sectionName) {
+                return;
+            }
+            ensureLinksSection(sectionName);
+            const section = document.querySelector(`[data-section-block][data-section="${sectionName}"]`);
+            section?.scrollIntoView({ block: "start" });
+            quickSectionInput.value = "";
+            quickSectionForm.classList.remove("is-open");
+        });
+    }
+
+    document.addEventListener("keydown", async (event) => {
+        if (event.key !== "Escape") {
+            return;
+        }
+        if (quickSectionForm?.classList.contains("is-open")) {
+            quickSectionForm.classList.remove("is-open");
+            if (quickSectionInput) {
+                quickSectionInput.value = "";
+            }
+            return;
+        }
+        if (settingsPanel.classList.contains("open")) {
+            settingsPanel.classList.remove("open");
+            settingsPanel.setAttribute("aria-hidden", "true");
+            setRearrangeMode(false);
+            updateLinkRowDragState();
+            return;
+        }
+        if (isRearranging) {
+            setRearrangeMode(false);
         }
     });
 

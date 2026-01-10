@@ -66,6 +66,11 @@
                         <button type="button" data-action="quick-add-link">New Link</button>
                         <button type="button" data-action="quick-add-section">New Category</button>
                         <button type="button" data-action="quick-add-engine">New Search</button>
+                        <form class="settings-nav-popover" data-nav-popover>
+                            <input id="quick-section-name" type="text" placeholder="Category name" aria-label="Category name">
+                            <button type="submit">Add</button>
+                            <button type="button" data-action="quick-cancel-section">Cancel</button>
+                        </form>
                     </span>
                 </nav>
             </div>
@@ -203,6 +208,7 @@
 
         <template id="link-row-template">
             <div class="editor-row link-row" data-link-row>
+                <button class="link-row-handle" type="button" aria-label="Drag link">Drag</button>
                 <img class="icon-preview" alt="" width="24" height="24">
                 <label class="field field-name">
                     Name
