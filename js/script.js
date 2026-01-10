@@ -273,20 +273,36 @@ function renderBackground(config) {
     const mode = config.backgroundMode || "images";
     if (mode === "images") {
         document.body.classList.add("background-image");
-        renderImageBackground(config.backgrounds);
+        document.body.classList.remove("background-blur");
+        renderImageBackground(config.backgrounds, false);
+        return;
+    }
+    if (mode === "images_blur") {
+        document.body.classList.remove("background-image");
+        document.body.classList.add("background-blur");
+        renderImageBackground(config.backgrounds, true);
         return;
     }
     document.body.classList.remove("background-image");
+    document.body.classList.remove("background-blur");
     document.body.style.backgroundImage = "";
+    document.body.style.setProperty("--background-image", "none");
     applyGradientMode(mode);
 }
 
-function renderImageBackground(backgrounds) {
+function renderImageBackground(backgrounds, useBlur) {
     if (!backgrounds.length) {
         document.body.style.backgroundImage = "";
+        document.body.style.setProperty("--background-image", "none");
         return;
     }
     const random = backgrounds[Math.floor(Math.random() * backgrounds.length)];
+    if (useBlur) {
+        document.body.style.backgroundImage = "";
+        document.body.style.setProperty("--background-image", `url("${random}")`);
+        return;
+    }
+    document.body.style.setProperty("--background-image", "none");
     document.body.style.backgroundImage = `url("${random}")`;
 }
 
@@ -669,6 +685,11 @@ function setupSettings() {
                 const dataUrl = await fileToDataUrl(file);
                 addBackgroundRow(dataUrl);
                 storeBackgroundThumb(dataUrl);
+            }
+            if (files.length) {
+                backgroundMode.value = "images";
+                activeConfig = { ...activeConfig, backgroundMode: "images" };
+                renderBackground(activeConfig);
             }
             event.target.value = "";
         });
