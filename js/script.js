@@ -724,12 +724,18 @@ function setupSettings() {
     });
 
     exportConfig.addEventListener("click", () => {
-        const data = JSON.stringify(collectConfigFromEditors(), null, 2);
+        const config = collectConfigFromEditors();
+        const data = JSON.stringify(config, null, 2);
         const blob = new Blob([data], { type: "application/json" });
         const url = URL.createObjectURL(blob);
         const anchor = document.createElement("a");
         anchor.href = url;
-        anchor.download = "mothership-config.json";
+        const title = (config.branding?.title || "mothership")
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/(^-|-$)+/g, "");
+        const timestamp = new Date().toISOString().replace(/[:T]/g, "-").replace(/\..+/, "");
+        anchor.download = `${title || "mothership"}-${timestamp}.json`;
         anchor.click();
         URL.revokeObjectURL(url);
     });
