@@ -790,6 +790,18 @@ textarea {
     color: var(--muted);
 }
 
+#settings-branding .row {
+    align-items: stretch;
+}
+
+#settings-branding .branding-field {
+    flex: 1 1 240px;
+}
+
+#settings-branding .branding-field-wide {
+    flex: 1 1 100%;
+}
+
 .file-field {
     display: flex;
     align-items: center;
