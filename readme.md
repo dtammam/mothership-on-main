@@ -28,18 +28,9 @@ The original inspiration came from a coworker pointing out that my clerical work
 
 ## Installation
 
-1. Download this project in a location of your choosing
+Install from the Microsoft Edge Add-ons store (recommended).
 
-2. Open the extension and click `Customize` to manage links, images, quotes, and search engines.
-    - Text config (links/quotes/search/sections) syncs via `chrome.storage.sync` across devices when available
-    - Uploaded images and favicon overrides stay local, but export/import includes them
-    - The default config lives in `config.json`
-
-4. In Edge/Chrome, go to `Settings`, `Manage Extensions`, `Load Unpacked` and select the folder you downloaded
-    - Once selected, you'll see it pop up in the list of extensions, enabled
-    - Open a new tab to confirm that it worked
-
-5. To modify in the future, open a new tab and click `Customize`. A store-published version for Chrome and Edge is coming soon.
+If you are working on the codebase locally, you can still load it as an unpacked extension in Edge/Chrome.
 
 ## Usage
 
