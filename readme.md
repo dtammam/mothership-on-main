@@ -52,7 +52,15 @@ This extension does the following:
 
 ## License
 
-[MIT](license)
+[MIT](LICENSE)
+
+## Privacy
+
+See [PRIVACY](PRIVACY.md).
+
+## Changelog
+
+See [CHANGELOG](CHANGELOG.md).
 
 ## Credits
 
