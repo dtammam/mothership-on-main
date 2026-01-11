@@ -28,7 +28,7 @@
                     </div>
                 </div>
 
-                <form id="search-form" action="" method="get" target="_blank">
+                <form id="search-form" action="" method="get">
                     <select id="search-engine" aria-label="Search engine"></select>
                     <input id="search-input" type="text" name="q" placeholder="Find what you're looking for" required>
                     <button type="submit">Search</button>
@@ -62,6 +62,16 @@
                     <a href="#settings-backgrounds">Backgrounds</a>
                     <a href="#settings-layout">Layout</a>
                     <a href="#settings-links">Links</a>
+                    <span class="settings-nav-actions">
+                        <button type="button" data-action="quick-add-link">New Link</button>
+                        <button type="button" data-action="quick-add-section">New Category</button>
+                        <button type="button" data-action="quick-add-engine">New Search</button>
+                        <form class="settings-nav-popover" data-nav-popover>
+                            <input id="quick-section-name" type="text" placeholder="Category name" aria-label="Category name">
+                            <button type="submit">Add</button>
+                            <button type="button" data-action="quick-cancel-section">Cancel</button>
+                        </form>
+                    </span>
                 </nav>
             </div>
 
@@ -69,6 +79,15 @@
                 <h3>Config</h3>
                 <div class="row">
                     <button id="export-config" class="ghost-button" type="button">Download config</button>
+                    <label class="field">
+                        Import mode
+                        <select id="import-config-mode">
+                            <option value="all">Import all</option>
+                            <option value="quotes">Import quotes</option>
+                            <option value="search">Import searches</option>
+                            <option value="links">Import links</option>
+                        </select>
+                    </label>
                     <label class="file-field">
                         <span class="file-button">Choose file</span>
                         <span id="import-config-name" class="file-name">No file chosen</span>
@@ -85,7 +104,7 @@
                         Header
                         <input id="branding-title" type="text" placeholder="Mothership on Main">
                     </label>
-                    <label class="field branding-field">
+                    <label class="field branding-field branding-field-wide">
                         Subheader
                         <input id="branding-subtitle" type="text" placeholder="Your favorite bookmark replacement tool">
                     </label>
@@ -102,11 +121,6 @@
                         <select id="default-engine"></select>
                     </label>
                 </div>
-                <label class="file-field">
-                    <span class="file-button">Import engines</span>
-                    <span id="search-upload-name" class="file-name">No file selected</span>
-                    <input id="search-upload" type="file" accept=".json">
-                </label>
             </div>
 
             <div id="settings-quotes" class="settings-section">
@@ -130,8 +144,15 @@
                         Mode
                         <select id="background-mode">
                             <option value="gradient_signature">Signature gradient</option>
-                            <option value="gradient_dynamic">Dynamic gradient</option>
                             <option value="images">Uploaded images</option>
+                            <option value="images_blur">Uploaded images (blurred)</option>
+                            <option value="gradient_dynamic">Dynamic gradient from favicons</option>
+                            <option value="gradient_soda">Soda pop gradient</option>
+                            <option value="gradient_azure">Azure skies gradient</option>
+                            <option value="gradient_github_dark">Octocat night gradient</option>
+                            <option value="gradient_dracula">Dracula dusk gradient</option>
+                            <option value="gradient_synthwave">Synthwave sunset gradient</option>
+                            <option value="gradient_daylight">Daylight bloom gradient</option>
                         </select>
                     </label>
                 </div>
@@ -166,24 +187,19 @@
                 </div>
             </div>
             <div class="settings-footer">
-                <div class="footer-credit">Envisioned by Dean Tammam, implemented with Codex.</div>
+                <div class="footer-credit">New-tab productivity, built by Dean with AI.</div>
                 <div class="footer-links">
-                    <a class="footer-link" href="https://github.com/dtammam/mothership-on-main" target="_blank" rel="noopener" aria-label="GitHub repository">
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                            <path d="M12 2C6.48 2 2 6.58 2 12.26c0 4.53 2.87 8.38 6.84 9.74.5.1.68-.22.68-.48 0-.24-.01-.88-.01-1.72-2.78.62-3.37-1.37-3.37-1.37-.45-1.2-1.11-1.52-1.11-1.52-.9-.63.07-.62.07-.62 1 .07 1.52 1.06 1.52 1.06.89 1.56 2.34 1.11 2.91.85.09-.67.35-1.11.63-1.37-2.22-.26-4.56-1.15-4.56-5.1 0-1.13.39-2.05 1.03-2.78-.1-.26-.45-1.3.1-2.7 0 0 .85-.28 2.78 1.06a9.5 9.5 0 0 1 5.06 0c1.93-1.34 2.78-1.06 2.78-1.06.55 1.4.2 2.44.1 2.7.64.73 1.03 1.65 1.03 2.78 0 3.96-2.35 4.84-4.58 5.1.36.33.68.97.68 1.96 0 1.42-.01 2.56-.01 2.91 0 .27.18.59.69.48A10.24 10.24 0 0 0 22 12.26C22 6.58 17.52 2 12 2z"/>
-                        </svg>
-                    </a>
-                    <a class="footer-link" href="https://deantammam.substack.com/" target="_blank" rel="noopener" aria-label="Substack">
+                    <a class="footer-link" href="https://deantammam.substack.com/" aria-label="Substack">
                         <svg viewBox="0 0 24 24" aria-hidden="true">
                             <path d="M4 5h16v3H4V5zm0 5h16v3H4v-3zm0 5h16v3l-8 4-8-4v-3z"/>
                         </svg>
                     </a>
-                    <a class="footer-link" href="https://www.linkedin.com/in/dean-tammam-15b4775a" target="_blank" rel="noopener" aria-label="LinkedIn">
+                    <a class="footer-link" href="https://www.linkedin.com/in/dean-tammam-15b4775a" aria-label="LinkedIn">
                         <svg viewBox="0 0 24 24" aria-hidden="true">
                             <path d="M6.94 8.5H3.5V21h3.44V8.5zM5.22 3.5C4.1 3.5 3.2 4.4 3.2 5.5c0 1.1.9 2 2.02 2s2.02-.9 2.02-2c0-1.1-.9-2-2.02-2zM20.5 13.1c0-3.2-1.7-4.7-4-4.7-1.8 0-2.7 1-3.1 1.8h-.05V8.5H9.9V21h3.44v-6.2c0-1.6.3-3.1 2.3-3.1 2 0 2 1.9 2 3.2V21h3.46v-7.9z"/>
                         </svg>
                     </a>
-                    <a class="footer-link" href="https://chatgpt.com/features/codex" target="_blank" rel="noopener" aria-label="OpenAI">
+                    <a class="footer-link" href="https://chatgpt.com/features/codex" aria-label="OpenAI">
                         <svg viewBox="0 0 24 24" aria-hidden="true">
                             <path d="M22.27 8.81a4.9 4.9 0 0 0-2.1-2.1 5.03 5.03 0 0 0 .16-2.33 5.12 5.12 0 0 0-7.07-1.87 5.03 5.03 0 0 0-2.33-.16 4.9 4.9 0 0 0-2.1-2.1 5.12 5.12 0 0 0-7.07 7.07 4.9 4.9 0 0 0 2.1 2.1 5.03 5.03 0 0 0-.16 2.33 5.12 5.12 0 0 0 7.07 1.87 5.03 5.03 0 0 0 2.33.16 4.9 4.9 0 0 0 2.1 2.1 5.12 5.12 0 0 0 7.07-7.07 4.9 4.9 0 0 0-2.1-2.1 5.03 5.03 0 0 0 .16-2.33zM12 7.02a2.98 2.98 0 0 1 2.58 1.5 2.97 2.97 0 0 1-1.1 4.08 2.98 2.98 0 0 1-4.08-1.1 2.97 2.97 0 0 1 1.1-4.08A2.98 2.98 0 0 1 12 7.02z"/>
                         </svg>
@@ -198,6 +214,7 @@
 
         <template id="link-row-template">
             <div class="editor-row link-row" data-link-row>
+                <button class="link-row-handle" type="button" aria-label="Drag link">Drag</button>
                 <img class="icon-preview" alt="" width="24" height="24">
                 <label class="field field-name">
                     Name
@@ -209,13 +226,13 @@
                 </label>
                 <label class="field field-section">
                     Section
-                    <input data-field="section" type="text" placeholder="Primary">
+                    <input data-field="section" type="text" placeholder="Links">
                 </label>
                 <label class="field field-icon">
                     Icon override
                     <input data-field="icon" type="file" accept="image/*">
                 </label>
-                <button data-action="remove-link" class="ghost-button" type="button">Remove</button>
+                <button data-action="remove-link" class="link-row-remove" type="button" aria-label="Remove link">X</button>
             </div>
         </template>
 

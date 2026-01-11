@@ -22,24 +22,15 @@ The original inspiration came from a coworker pointing out that my clerical work
 ## Highlights
 
 - New tab + home replacement with sections and rich link cards
-- Built-in Customize panel with jump navigation, branding, quotes, backgrounds, search engines, and links
+- Built-in Customize panel with jump navigation, quick-add pills, branding, quotes, backgrounds, search engines, and links
 - Favicon caching with overrides and a dynamic gradient background
-- Drag to reorder sections and links, including cross-section moves
+- Drag to reorder sections and links on the main page and inside Customize
 
 ## Installation
 
-1. Download this project in a location of your choosing
+Install from the Microsoft Edge Add-ons store (recommended).
 
-2. Open the extension and click `Customize` to manage links, images, quotes, and search engines.
-    - Text config (links/quotes/search/sections) syncs via `chrome.storage.sync` across devices when available
-    - Uploaded images and favicon overrides stay local, but export/import includes them
-    - The default config lives in `config.json`
-
-4. In Edge/Chrome, go to `Settings`, `Manage Extensions`, `Load Unpacked` and select the folder you downloaded
-    - Once selected, you'll see it pop up in the list of extensions, enabled
-    - Open a new tab to confirm that it worked
-
-5. To modify in the future, open a new tab and click `Customize`. A store-published version for Chrome and Edge is coming soon.
+If you are working on the codebase locally, you can still load it as an unpacked extension in Edge/Chrome.
 
 ## Usage
 
@@ -48,17 +39,28 @@ This extension does the following:
 - Provides a config-backed multi-search window
 - Displays quotes/notes on page load (brandable heading)
 - Changes the background image on page load (including uploads, with lightweight thumbnails in Customize)
+- Keeps search and link navigation in the current tab
 - Allows for efficient web browser usage with custom links and favicon caching/overrides
 
 ## Customize tips
 
-- Use the jump pills at the top of Customize to hop between sections.
+- Use the jump pills at the top of Customize to hop between sections; use the New Link/Category/Search pills for quick adds.
+- Drag links directly in Customize to reorder within and across categories.
+- The topmost category becomes the default for new links.
 - The Quotes heading can be renamed in Customize to match your brand voice.
 - Large background images are stored full-size, but the editor uses lightweight thumbnails for speed.
 
 ## License
 
-[MIT](license)
+[MIT](LICENSE)
+
+## Privacy
+
+See [PRIVACY](PRIVACY.md).
+
+## Changelog
+
+See [CHANGELOG](CHANGELOG.md).
 
 ## Credits
 

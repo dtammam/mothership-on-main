@@ -11,14 +11,15 @@ const LEGACY_KEY = "mothershipConfig";
 const SYNC_META_KEY = "mothershipSyncMeta";
 const FAVICON_CACHE_KEY = "mothershipFaviconCache";
 const BACKGROUND_THUMBS_KEY = "mothershipBackgroundThumbs";
+const DEFAULT_LINK_SECTION = "Links";
 
 const fallbackConfig = {
     branding: { title: "Mothership on Main", subtitle: "Your favorite bookmark replacement tool", quotesTitle: "Quotes" },
-    sections: ["Primary", "Secondary", "Tertiary"],
+    sections: [DEFAULT_LINK_SECTION],
     links: [],
     quotes: [],
     backgrounds: [],
-    backgroundMode: "gradient_dynamic",
+    backgroundMode: "gradient_signature",
     layout: { maxColumns: 4, minCardWidth: 180 },
     search: { defaultEngine: "google", engines: [] }
 };
@@ -93,6 +94,7 @@ let currentDragType = "";
 let currentDragSection = null;
 let backgroundPreviewObserver = null;
 let backgroundPreviewPanel = null;
+let canRearrangeEditor = () => false;
 
 document.addEventListener("DOMContentLoaded", () => {
     init().catch((error) => {
@@ -271,20 +273,36 @@ function renderBackground(config) {
     const mode = config.backgroundMode || "images";
     if (mode === "images") {
         document.body.classList.add("background-image");
-        renderImageBackground(config.backgrounds);
+        document.body.classList.remove("background-blur");
+        renderImageBackground(config.backgrounds, false);
+        return;
+    }
+    if (mode === "images_blur") {
+        document.body.classList.remove("background-image");
+        document.body.classList.add("background-blur");
+        renderImageBackground(config.backgrounds, true);
         return;
     }
     document.body.classList.remove("background-image");
+    document.body.classList.remove("background-blur");
     document.body.style.backgroundImage = "";
+    document.body.style.setProperty("--background-image", "none");
     applyGradientMode(mode);
 }
 
-function renderImageBackground(backgrounds) {
+function renderImageBackground(backgrounds, useBlur) {
     if (!backgrounds.length) {
         document.body.style.backgroundImage = "";
+        document.body.style.setProperty("--background-image", "none");
         return;
     }
     const random = backgrounds[Math.floor(Math.random() * backgrounds.length)];
+    if (useBlur) {
+        document.body.style.backgroundImage = "";
+        document.body.style.setProperty("--background-image", `url("${random}")`);
+        return;
+    }
+    document.body.style.setProperty("--background-image", "none");
     document.body.style.backgroundImage = `url("${random}")`;
 }
 
@@ -297,7 +315,7 @@ function renderSections(config) {
     const linksBySection = new Map();
     sections.forEach((section) => linksBySection.set(section, []));
     lastRenderLinks.forEach((link) => {
-        const section = link.section || "Links";
+        const section = link.section || DEFAULT_LINK_SECTION;
         if (!linksBySection.has(section)) {
             linksBySection.set(section, []);
         }
@@ -336,8 +354,7 @@ function renderSections(config) {
             const card = document.createElement("a");
             card.className = "link-card";
             card.href = link.url;
-            card.target = "_blank";
-            card.rel = "noopener";
+            card.target = "_self";
             card.dataset.linkId = link.id;
             card.dataset.section = section;
             card.draggable = isRearranging;
@@ -385,7 +402,7 @@ function deriveSections(links, existingSections) {
         });
     }
     links.forEach((link) => {
-        const section = link.section || "Links";
+        const section = link.section || DEFAULT_LINK_SECTION;
         if (!seen.has(section)) {
             ordered.push(section);
             seen.add(section);
@@ -472,18 +489,20 @@ function setupSettings() {
     const backgroundUploadName = document.getElementById("background-upload-name");
     const quotesUpload = document.getElementById("quotes-upload");
     const quotesUploadName = document.getElementById("quotes-upload-name");
-    const searchUpload = document.getElementById("search-upload");
-    const searchUploadName = document.getElementById("search-upload-name");
     const exportConfig = document.getElementById("export-config");
     const importConfig = document.getElementById("import-config");
     const importConfigName = document.getElementById("import-config-name");
+    const importConfigMode = document.getElementById("import-config-mode");
     const resetConfig = document.getElementById("reset-config");
     const linksEditor = document.getElementById("links-editor");
     const sectionsContainer = document.getElementById("sections-container");
     const layoutMaxColumns = document.getElementById("layout-max-columns");
     const settingsNav = document.querySelector(".settings-nav");
+    const quickSectionForm = document.querySelector("[data-nav-popover]");
+    const quickSectionInput = document.getElementById("quick-section-name");
 
     setupSettingsNav(settingsPanel, settingsNav);
+    canRearrangeEditor = () => settingsPanel.classList.contains("open");
 
     const saveConfig = async (closePanel) => {
         const nextConfig = collectConfigFromEditors();
@@ -509,12 +528,14 @@ function setupSettings() {
             settingsPanel.classList.remove("open");
             settingsPanel.setAttribute("aria-hidden", "true");
             setRearrangeMode(false);
+            updateLinkRowDragState();
             return;
         }
         setRearrangeMode(false);
         renderSettings(activeConfig);
         settingsPanel.classList.add("open");
         settingsPanel.setAttribute("aria-hidden", "false");
+        updateLinkRowDragState();
     });
 
     rearrangeToggle.addEventListener("click", async () => {
@@ -531,6 +552,7 @@ function setupSettings() {
             settingsPanel.classList.remove("open");
             settingsPanel.setAttribute("aria-hidden", "true");
             setRearrangeMode(false);
+            updateLinkRowDragState();
         });
     }
 
@@ -538,6 +560,7 @@ function setupSettings() {
         settingsPanel.classList.remove("open");
         settingsPanel.setAttribute("aria-hidden", "true");
         setRearrangeMode(false);
+        updateLinkRowDragState();
     });
 
     if (settingsSave) {
@@ -557,6 +580,35 @@ function setupSettings() {
         if (!action) {
             return;
         }
+        if (action === "quick-add-link") {
+            const row = addLinkRow();
+            const section = document.getElementById("settings-links");
+            section?.scrollIntoView({ block: "start" });
+            row?.querySelector('[data-field="name"]')?.focus();
+        }
+        if (action === "quick-add-section") {
+            if (quickSectionForm) {
+                quickSectionForm.classList.toggle("is-open");
+            }
+            quickSectionInput?.focus({ preventScroll: true });
+        }
+        if (action === "quick-cancel-section") {
+            if (!quickSectionForm) {
+                return;
+            }
+            quickSectionForm.classList.remove("is-open");
+            if (quickSectionInput) {
+                quickSectionInput.value = "";
+            }
+        }
+        if (action === "quick-add-engine") {
+            addEngineRow({ id: "", label: "", url: "", queryParam: "q" });
+            refreshDefaultEngineOptions();
+            const section = document.getElementById("settings-search");
+            section?.scrollIntoView({ block: "start" });
+            const lastEngine = document.querySelector("#engines-editor [data-engine-row]:last-child");
+            lastEngine?.querySelector('[data-field="id"]')?.focus();
+        }
         if (action === "remove-link") {
             event.target.closest("[data-link-row]")?.remove();
         }
@@ -569,6 +621,44 @@ function setupSettings() {
         }
         if (action === "remove-section") {
             event.target.closest("[data-section-block]")?.remove();
+        }
+    });
+
+    if (quickSectionForm && quickSectionInput) {
+        quickSectionForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            const sectionName = quickSectionInput.value.trim();
+            if (!sectionName) {
+                return;
+            }
+            ensureLinksSection(sectionName);
+            const section = document.querySelector(`[data-section-block][data-section="${sectionName}"]`);
+            section?.scrollIntoView({ block: "start" });
+            quickSectionInput.value = "";
+            quickSectionForm.classList.remove("is-open");
+        });
+    }
+
+    document.addEventListener("keydown", async (event) => {
+        if (event.key !== "Escape") {
+            return;
+        }
+        if (quickSectionForm?.classList.contains("is-open")) {
+            quickSectionForm.classList.remove("is-open");
+            if (quickSectionInput) {
+                quickSectionInput.value = "";
+            }
+            return;
+        }
+        if (settingsPanel.classList.contains("open")) {
+            settingsPanel.classList.remove("open");
+            settingsPanel.setAttribute("aria-hidden", "true");
+            setRearrangeMode(false);
+            updateLinkRowDragState();
+            return;
+        }
+        if (isRearranging) {
+            setRearrangeMode(false);
         }
     });
 
@@ -595,6 +685,11 @@ function setupSettings() {
                 addBackgroundRow(dataUrl);
                 storeBackgroundThumb(dataUrl);
             }
+            if (files.length) {
+                backgroundMode.value = "images";
+                activeConfig = { ...activeConfig, backgroundMode: "images" };
+                renderBackground(activeConfig);
+            }
             event.target.value = "";
         });
 
@@ -606,35 +701,23 @@ function setupSettings() {
         updateFileLabel(quotesUploadName, [file], "No file selected");
         const text = await file.text();
         const textarea = document.getElementById("quotes-editor");
-        const existing = textarea.value ? `${textarea.value}\n` : "";
-        textarea.value = `${existing}${text}`.trim();
+        textarea.value = text.trim();
         event.target.value = "";
     });
 
-    searchUpload.addEventListener("change", async (event) => {
-        const file = event.target.files?.[0];
-        if (!file) {
-            return;
-        }
-        updateFileLabel(searchUploadName, [file], "No file selected");
-        try {
-            const payload = JSON.parse(await file.text());
-            const imported = payload.engines ? payload : { engines: payload };
-            renderSettings(mergeConfig(activeConfig, { search: imported }));
-        } catch (error) {
-            console.error("Invalid search config");
-        } finally {
-            event.target.value = "";
-        }
-    });
-
     exportConfig.addEventListener("click", () => {
-        const data = JSON.stringify(collectConfigFromEditors(), null, 2);
+        const config = collectConfigFromEditors();
+        const data = JSON.stringify(config, null, 2);
         const blob = new Blob([data], { type: "application/json" });
         const url = URL.createObjectURL(blob);
         const anchor = document.createElement("a");
         anchor.href = url;
-        anchor.download = "mothership-config.json";
+        const title = (config.branding?.title || "mothership")
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/(^-|-$)+/g, "");
+        const timestamp = new Date().toISOString().replace(/[:T]/g, "-").replace(/\..+/, "");
+        anchor.download = `${title || "mothership"}-${timestamp}.json`;
         anchor.click();
         URL.revokeObjectURL(url);
     });
@@ -647,7 +730,35 @@ function setupSettings() {
         updateFileLabel(importConfigName, [file], "No file selected");
         try {
             const payload = JSON.parse(await file.text());
-            renderSettings(mergeConfig(activeConfig, payload));
+            const baseConfig = collectConfigFromEditors();
+            const mode = importConfigMode?.value || "all";
+            if (mode === "quotes") {
+                const quotes = normalizeQuotesImport(payload);
+                renderSettings(mergeConfig(baseConfig, { quotes }));
+                return;
+            }
+            if (mode === "search") {
+                const search =
+                    payload.search ||
+                    (payload.engines ? payload : Array.isArray(payload) ? { engines: payload } : null);
+                if (!search) {
+                    console.error("Invalid search config");
+                    return;
+                }
+                renderSettings(mergeConfig(baseConfig, { search }));
+                return;
+            }
+            if (mode === "links") {
+                const links = Array.isArray(payload.links) ? payload.links : Array.isArray(payload) ? payload : [];
+                const sections = Array.isArray(payload.sections) ? payload.sections : [];
+                const update = { links };
+                if (sections.length) {
+                    update.sections = sections;
+                }
+                renderSettings(mergeConfig(baseConfig, update));
+                return;
+            }
+            renderSettings(mergeConfig(baseConfig, payload));
         } catch (error) {
             console.error("Invalid config file");
         } finally {
@@ -694,7 +805,7 @@ function setupSettings() {
     });
 
     linksEditor.addEventListener("dragstart", (event) => {
-        if (!isRearranging) {
+        if (!isRearranging && !canRearrangeEditor()) {
             return;
         }
         const row = event.target.closest("[data-link-row]");
@@ -714,7 +825,7 @@ function setupSettings() {
     });
 
     linksEditor.addEventListener("dragover", (event) => {
-        if (!isRearranging) {
+        if (!isRearranging && !canRearrangeEditor()) {
             return;
         }
         const list = event.target.closest("[data-section-list]");
@@ -730,7 +841,7 @@ function setupSettings() {
     });
 
     linksEditor.addEventListener("drop", (event) => {
-        if (!isRearranging) {
+        if (!isRearranging && !canRearrangeEditor()) {
             return;
         }
         const list = event.target.closest("[data-section-list]");
@@ -941,7 +1052,7 @@ function setupSettingsNav(panel, nav) {
 }
 
 function renderSettings(config) {
-    renderLinksEditor(config.links);
+    renderLinksEditor(config.links, config.sections);
     renderBackgroundsEditor(config.backgrounds);
     renderQuotesEditor(config.quotes);
     renderSearchEditor(config.search);
@@ -950,11 +1061,37 @@ function renderSettings(config) {
     renderBackgroundModeEditor(config.backgroundMode);
 }
 
-function renderLinksEditor(links) {
+function normalizeQuotesImport(payload) {
+    if (Array.isArray(payload)) {
+        return payload.filter((line) => typeof line === "string").map((line) => line.trim()).filter(Boolean);
+    }
+    if (typeof payload === "string") {
+        return payload
+            .split("\n")
+            .map((line) => line.trim())
+            .filter(Boolean);
+    }
+    if (Array.isArray(payload?.quotes)) {
+        return payload.quotes
+            .filter((line) => typeof line === "string")
+            .map((line) => line.trim())
+            .filter(Boolean);
+    }
+    if (typeof payload?.quotes === "string") {
+        return payload.quotes
+            .split("\n")
+            .map((line) => line.trim())
+            .filter(Boolean);
+    }
+    return [];
+}
+
+
+function renderLinksEditor(links, sectionsOverride) {
     const container = document.getElementById("links-editor");
     const template = document.getElementById("link-row-template");
     container.innerHTML = "";
-    const sections = deriveSections(links, activeConfig?.sections || []);
+    const sections = deriveSections(links, sectionsOverride || []);
     const sectionBlocks = new Map();
 
     const ensureSection = (sectionName) => {
@@ -967,7 +1104,7 @@ function renderLinksEditor(links) {
     };
 
     if (!sections.length) {
-        sections.push("Links");
+        sections.push(DEFAULT_LINK_SECTION);
     }
 
     sections.forEach((section) => ensureSection(section));
@@ -978,18 +1115,23 @@ function renderLinksEditor(links) {
         row.dataset.iconOverride = link.iconOverride || "";
         row.querySelector('[data-field="name"]').value = link.name || "";
         row.querySelector('[data-field="url"]').value = link.url || "";
-        row.querySelector('[data-field="section"]').value = link.section || sections[0];
+        row.querySelector('[data-field="section"]').value = link.section || DEFAULT_LINK_SECTION;
         const preview = row.querySelector(".icon-preview");
         preview.src = link.iconOverride || "images/icon.png";
         row.draggable = isRearranging;
-        const sectionName = link.section || sections[0];
+        const sectionName = link.section || DEFAULT_LINK_SECTION;
         const list = ensureSection(sectionName);
         list.appendChild(row);
     });
     if (!links.length) {
-        addLinkRow(sections[0]);
+        addLinkRow(DEFAULT_LINK_SECTION);
     }
     updateLinkRowDragState();
+}
+
+function getDefaultLinkSectionFromMain() {
+    const firstSection = document.querySelector("#sections-container .section");
+    return firstSection?.dataset.section || DEFAULT_LINK_SECTION;
 }
 
 function ensureLinksSection(sectionName) {
@@ -1085,38 +1227,25 @@ function renderLayoutEditor(layout) {
 function addLinkRow(sectionName) {
     const container = document.getElementById("links-editor");
     const template = document.getElementById("link-row-template");
-    const sectionList =
-        (sectionName && container.querySelector(`[data-section-list][data-section="${sectionName}"]`)) ||
-        container.querySelector("[data-section-list]");
-    if (!sectionList) {
-        const section = document.createElement("div");
-        section.className = "links-section";
-        section.dataset.section = sectionName || "Links";
-        const heading = document.createElement("h4");
-        heading.textContent = sectionName || "Links";
-        const list = document.createElement("div");
-        list.className = "section-list";
-        list.dataset.sectionList = "true";
-        list.dataset.section = sectionName || "Links";
-        section.appendChild(heading);
-        section.appendChild(list);
-        container.appendChild(section);
-    }
+    const resolvedSection = sectionName || getDefaultLinkSectionFromMain();
+    ensureLinksSection(resolvedSection);
     const targetList =
-        (sectionName && container.querySelector(`[data-section-list][data-section="${sectionName}"]`)) ||
+        container.querySelector(`[data-section-list][data-section="${resolvedSection}"]`) ||
         container.querySelector("[data-section-list]");
     const row = template.content.firstElementChild.cloneNode(true);
     row.dataset.linkId = createId();
     row.dataset.iconOverride = "";
     row.querySelector(".icon-preview").src = "images/icon.png";
-    row.querySelector('[data-field="section"]').value = sectionName || "Links";
-    row.draggable = isRearranging;
+    row.querySelector('[data-field="section"]').value = resolvedSection;
+    row.draggable = isRearranging || canRearrangeEditor();
     if (targetList) {
-        targetList.appendChild(row);
+        targetList.prepend(row);
+        row.scrollIntoView({ block: "nearest" });
     } else {
         container.appendChild(row);
     }
     updateLinkRowDragState();
+    return row;
 }
 
 function addBackgroundRow(value, containerOverride, templateOverride) {
@@ -1297,7 +1426,7 @@ function collectLinks() {
             id,
             name: name || url,
             url,
-            section: section || "Links",
+            section: section || DEFAULT_LINK_SECTION,
             iconOverride
         });
     });
@@ -1326,8 +1455,9 @@ function setRearrangeMode(enabled) {
 }
 
 function updateLinkRowDragState() {
+    const allowDrag = isRearranging || canRearrangeEditor();
     document.querySelectorAll("[data-link-row]").forEach((row) => {
-        row.draggable = isRearranging;
+        row.draggable = allowDrag;
     });
 }
 
@@ -1394,7 +1524,7 @@ function collectLinksFromMain() {
     const links = [];
     const grids = document.querySelectorAll(".links-grid");
     grids.forEach((grid) => {
-        const section = grid.dataset.section || "Links";
+        const section = grid.dataset.section || DEFAULT_LINK_SECTION;
         grid.querySelectorAll(".link-card").forEach((card) => {
             const link = lastRenderLinks.find((item) => item.id === card.dataset.linkId);
             if (link) {
@@ -1486,6 +1616,30 @@ function applyGradientMode(mode) {
         applyDynamicGradient();
         return;
     }
+    if (mode === "gradient_soda") {
+        applySodaGradient();
+        return;
+    }
+    if (mode === "gradient_github_dark") {
+        applyGithubDarkGradient();
+        return;
+    }
+    if (mode === "gradient_azure") {
+        applyAzureGradient();
+        return;
+    }
+    if (mode === "gradient_dracula") {
+        applyDraculaGradient();
+        return;
+    }
+    if (mode === "gradient_synthwave") {
+        applySynthwaveGradient();
+        return;
+    }
+    if (mode === "gradient_daylight") {
+        applyDaylightGradient();
+        return;
+    }
     applySignatureGradient();
 }
 
@@ -1495,6 +1649,66 @@ function applySignatureGradient() {
         [79, 172, 254],
         [255, 200, 124],
         [137, 247, 254]
+    ];
+    setAuraPalette(palette);
+}
+
+function applySodaGradient() {
+    const palette = [
+        [116, 255, 216],
+        [94, 215, 255],
+        [255, 120, 164],
+        [255, 212, 88]
+    ];
+    setAuraPalette(palette);
+}
+
+function applyGithubDarkGradient() {
+    const palette = [
+        [13, 17, 23],
+        [22, 27, 34],
+        [48, 54, 61],
+        [88, 96, 105]
+    ];
+    setAuraPalette(palette);
+}
+
+function applyAzureGradient() {
+    const palette = [
+        [0, 120, 212],
+        [0, 91, 172],
+        [80, 188, 255],
+        [0, 183, 255]
+    ];
+    setAuraPalette(palette);
+}
+
+function applyDraculaGradient() {
+    const palette = [
+        [40, 42, 54],
+        [68, 71, 90],
+        [189, 147, 249],
+        [255, 121, 198]
+    ];
+    setAuraPalette(palette);
+}
+
+function applySynthwaveGradient() {
+    const palette = [
+        [255, 98, 196],
+        [138, 99, 255],
+        [79, 230, 255],
+        [255, 197, 109]
+    ];
+    setAuraPalette(palette);
+}
+
+function applyDaylightGradient() {
+    const palette = [
+        [255, 241, 198],
+        [255, 214, 170],
+        [255, 170, 204],
+        [186, 233, 255]
     ];
     setAuraPalette(palette);
 }
@@ -1511,7 +1725,8 @@ async function applyDynamicGradient() {
         applySignatureGradient();
         return;
     }
-    const unique = shuffleArray(filtered).slice(0, 4);
+    const boosted = filtered.map((color) => boostColor(color, 0.3));
+    const unique = shuffleArray(boosted).slice(0, 4);
     setAuraPalette(unique);
 }
 
@@ -1601,6 +1816,10 @@ function shuffleArray(list) {
         [array[i], array[j]] = [array[j], array[i]];
     }
     return array;
+}
+
+function boostColor(color, amount) {
+    return color.map((channel) => Math.min(255, Math.max(0, Math.round(channel + (255 - channel) * amount))));
 }
 
 function collectSectionsFromEditor() {

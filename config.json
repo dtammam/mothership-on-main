@@ -4,25 +4,19 @@
     "subtitle": "Your favorite bookmark replacement tool",
     "quotesTitle": "Quotes"
   },
-  "sections": ["Primary", "Secondary", "Tertiary"],
+  "sections": ["Links"],
   "links": [
-    { "section": "Primary", "name": "Gmail", "url": "https://mail.google.com/", "iconOverride": "" },
-    { "section": "Primary", "name": "Google Calendar", "url": "https://calendar.google.com/", "iconOverride": "" },
-    { "section": "Primary", "name": "Google Drive", "url": "https://drive.google.com/", "iconOverride": "" },
-    { "section": "Primary", "name": "Google Docs", "url": "https://docs.google.com/", "iconOverride": "" },
-    { "section": "Secondary", "name": "GitHub", "url": "https://github.com/", "iconOverride": "" },
-    { "section": "Secondary", "name": "Stack Overflow", "url": "https://stackoverflow.com/", "iconOverride": "" },
-    { "section": "Secondary", "name": "YouTube", "url": "https://www.youtube.com/", "iconOverride": "" },
-    { "section": "Secondary", "name": "Wikipedia", "url": "https://en.wikipedia.org/", "iconOverride": "" },
-    { "section": "Tertiary", "name": "Fireplace", "url": "https://www.youtube.com/watch?v=r2iSxZGYvCs", "iconOverride": "" },
-    { "section": "Tertiary", "name": "San Diego Pacific Beach", "url": "https://www.youtube.com/watch?v=w6P-AaGwTMM", "iconOverride": "" }
+    { "section": "Links", "name": "Google", "url": "https://www.google.com/", "iconOverride": "" },
+    { "section": "Links", "name": "YouTube", "url": "https://www.youtube.com/", "iconOverride": "" },
+    { "section": "Links", "name": "Wikipedia", "url": "https://en.wikipedia.org/", "iconOverride": "" },
+    { "section": "Links", "name": "Amazon", "url": "https://www.amazon.com/", "iconOverride": "" }
   ],
   "quotes": [
     "Technology is incredible!",
     "Absolute statements can be restrictive.",
     "Being grateful is typically a positive."
   ],
-  "backgroundMode": "gradient_dynamic",
+  "backgroundMode": "gradient_signature",
   "backgrounds": [],
   "layout": {
     "maxColumns": 4,

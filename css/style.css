@@ -32,6 +32,7 @@
     --aura-y3: 70%;
     --aura-x4: 78%;
     --aura-y4: 78%;
+    --background-image: none;
 }
 
 * {
@@ -65,6 +66,28 @@ body::before {
 
 body.background-image::before {
     background: linear-gradient(135deg, rgba(8, 10, 16, 0.38), rgba(5, 6, 12, 0.6));
+}
+
+body.background-blur {
+    background-image: none;
+}
+
+body.background-blur::before {
+    background-image: var(--background-image);
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    filter: blur(22px);
+    transform: scale(1.05);
+}
+
+body.background-blur::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(8, 10, 16, 0.38), rgba(5, 6, 12, 0.6));
+    z-index: 0;
 }
 
 .page {
@@ -358,6 +381,14 @@ button:hover,
     padding: 12px 0 8px;
 }
 
+.settings-nav-actions {
+    display: inline-flex;
+    gap: 8px;
+    margin-left: 16px;
+    align-items: center;
+    position: relative;
+}
+
 .settings-nav a {
     display: inline-flex;
     align-items: center;
@@ -373,9 +404,68 @@ button:hover,
     text-transform: uppercase;
 }
 
+.settings-nav button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(16, 18, 28, 0.8);
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
 .settings-nav a:hover {
     border-color: var(--accent);
     color: var(--text);
+}
+
+.settings-nav button:hover {
+    border-color: var(--accent);
+    color: var(--text);
+}
+
+.settings-nav-popover {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(16, 18, 28, 0.9);
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 5;
+}
+
+.settings-nav-popover.is-open {
+    display: inline-flex;
+}
+
+.settings-nav-popover input {
+    width: 160px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(10, 12, 20, 0.8);
+    color: var(--text);
+    font-size: 12px;
+}
+
+.settings-nav-popover button {
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(16, 18, 28, 0.8);
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
 }
 
 .settings-nav a.is-active {
@@ -572,6 +662,10 @@ button:hover,
     cursor: grab;
 }
 
+.settings-panel.open .link-row {
+    cursor: grab;
+}
+
 .link-row.dragging {
     opacity: 0.5;
 }
@@ -639,6 +733,42 @@ button:hover,
     gap: 12px;
 }
 
+.link-row {
+    position: relative;
+    padding: 12px;
+    border-radius: var(--radius-tight);
+    border: 1px solid transparent;
+    background: rgba(12, 14, 22, 0.55);
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.link-row-handle {
+    position: absolute;
+    top: 8px;
+    right: 36px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(10, 12, 20, 0.7);
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: grab;
+}
+
+.link-row:hover .link-row-handle,
+.link-row:focus-within .link-row-handle {
+    border-color: var(--accent);
+    color: var(--text);
+}
+
+.link-row:hover,
+.link-row:focus-within {
+    border-color: var(--accent);
+    background: rgba(23, 28, 42, 0.7);
+}
+
 .link-row > *,
 .engine-row > * {
     min-width: 0;
@@ -662,6 +792,32 @@ button:hover,
 
 .link-row .field-icon {
     flex: 1 1 220px;
+}
+
+.link-row-remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(10, 12, 20, 0.9);
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    padding: 0;
+}
+
+.link-row:hover .link-row-remove,
+.link-row:focus-within .link-row-remove {
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .link-row button,
@@ -717,6 +873,18 @@ textarea {
     letter-spacing: 0.04em;
     font-size: 11px;
     color: var(--muted);
+}
+
+#settings-branding .row {
+    align-items: stretch;
+}
+
+#settings-branding .branding-field {
+    flex: 1 1 240px;
+}
+
+#settings-branding .branding-field-wide {
+    flex: 1 1 100%;
 }
 
 .file-field {
