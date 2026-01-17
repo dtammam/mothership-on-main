@@ -6,12 +6,20 @@
 */
 
 const SYNC_KEY = "mothershipSyncConfig";
+const SYNC_CORE_KEY = "mothershipSyncCore";
+const SYNC_INDEX_KEY = "mothershipSyncIndex";
+const SYNC_LINKS_PREFIX = "mothershipSyncLinksChunk";
+const SYNC_QUOTES_PREFIX = "mothershipSyncQuotesChunk";
+const SYNC_BACKGROUNDS_PREFIX = "mothershipSyncBackgroundsChunk";
+const SYNC_TEST_KEY = "mothershipSyncQuotaTest";
 const LOCAL_ASSETS_KEY = "mothershipLocalAssets";
 const LEGACY_KEY = "mothershipConfig";
 const SYNC_META_KEY = "mothershipSyncMeta";
 const FAVICON_CACHE_KEY = "mothershipFaviconCache";
 const BACKGROUND_THUMBS_KEY = "mothershipBackgroundThumbs";
 const DEFAULT_LINK_SECTION = "Links";
+const SYNC_CHUNK_SIZE = 7000;
+const SYNC_TOTAL_QUOTA_BYTES = 100 * 1024;
 
 const fallbackConfig = {
     branding: { title: "Mothership on Main", subtitle: "Your favorite bookmark replacement tool", quotesTitle: "Quotes" },
@@ -121,10 +129,10 @@ async function init() {
 async function loadConfig() {
     const defaults = await loadDefaultConfig();
     const [storedSync, storedLocal] = await Promise.all([
-        storageSync.get(SYNC_KEY),
+        storageSync.get([SYNC_INDEX_KEY, SYNC_CORE_KEY, SYNC_KEY]),
         storageLocal.get(LOCAL_ASSETS_KEY)
     ]);
-    if (!storedSync[SYNC_KEY]) {
+    if (!storedSync[SYNC_INDEX_KEY] && !storedSync[SYNC_KEY]) {
         const legacy = await storageLocal.get(LEGACY_KEY);
         if (legacy[LEGACY_KEY]) {
             const legacyMerged = mergeConfig(defaults, legacy[LEGACY_KEY]);
@@ -140,7 +148,10 @@ async function loadConfig() {
             return applyLocalAssets(syncConfig, localAssets);
         }
     }
-    const merged = mergeConfig(defaults, storedSync[SYNC_KEY]);
+    const syncConfig = storedSync[SYNC_INDEX_KEY]
+        ? await loadChunkedSyncConfig(storedSync)
+        : storedSync[SYNC_KEY];
+    const merged = mergeConfig(defaults, syncConfig);
     return applyLocalAssets(merged, storedLocal[LOCAL_ASSETS_KEY]);
 }
 
@@ -771,8 +782,8 @@ function setupSettings() {
         if (!confirmed) {
             return;
         }
+        await clearSyncStorage();
         await Promise.all([
-            storageSync.remove(SYNC_KEY),
             storageLocal.remove([LOCAL_ASSETS_KEY, FAVICON_CACHE_KEY, SYNC_META_KEY])
         ]);
         faviconCache = {};
@@ -1867,21 +1878,211 @@ function splitConfig(config) {
     };
 }
 
+async function loadChunkedSyncConfig(storedSync) {
+    const index = storedSync[SYNC_INDEX_KEY];
+    const core = storedSync[SYNC_CORE_KEY] || {};
+    if (!index) {
+        return core;
+    }
+    const chunkKeys = [
+        ...getChunkKeys(SYNC_LINKS_PREFIX, index.linksChunks),
+        ...getChunkKeys(SYNC_QUOTES_PREFIX, index.quotesChunks),
+        ...getChunkKeys(SYNC_BACKGROUNDS_PREFIX, index.backgroundsChunks)
+    ];
+    if (!chunkKeys.length) {
+        return core;
+    }
+    const chunks = await storageSync.get(chunkKeys);
+    return {
+        ...core,
+        links: collectChunks(chunks, SYNC_LINKS_PREFIX, index.linksChunks),
+        quotes: collectChunks(chunks, SYNC_QUOTES_PREFIX, index.quotesChunks),
+        backgrounds: collectChunks(chunks, SYNC_BACKGROUNDS_PREFIX, index.backgroundsChunks)
+    };
+}
+
+function collectChunks(chunks, prefix, count) {
+    if (!count) {
+        return [];
+    }
+    const items = [];
+    for (let i = 0; i < count; i += 1) {
+        const key = `${prefix}_${i}`;
+        const value = chunks[key];
+        if (Array.isArray(value)) {
+            items.push(...value);
+        }
+    }
+    return items;
+}
+
+function getChunkKeys(prefix, count) {
+    if (!count) {
+        return [];
+    }
+    const keys = [];
+    for (let i = 0; i < count; i += 1) {
+        keys.push(`${prefix}_${i}`);
+    }
+    return keys;
+}
+
+function buildChunkEntries(prefix, chunks) {
+    return chunks.reduce((acc, chunk, index) => {
+        acc[`${prefix}_${index}`] = chunk;
+        return acc;
+    }, {});
+}
+
+function chunkArrayBySize(items, maxChars) {
+    const chunks = [];
+    let current = [];
+    let currentSize = 2;
+    items.forEach((item) => {
+        const itemSize = JSON.stringify(item).length + (current.length ? 1 : 0);
+        if (current.length && currentSize + itemSize > maxChars) {
+            chunks.push(current);
+            current = [];
+            currentSize = 2;
+        }
+        current.push(item);
+        currentSize += itemSize;
+    });
+    if (current.length) {
+        chunks.push(current);
+    }
+    return chunks;
+}
+
+function buildSyncPayload(syncConfig) {
+    const core = {
+        branding: syncConfig.branding,
+        sections: syncConfig.sections,
+        backgroundMode: syncConfig.backgroundMode,
+        layout: syncConfig.layout,
+        search: syncConfig.search
+    };
+    const linksChunks = chunkArrayBySize(syncConfig.links || [], SYNC_CHUNK_SIZE);
+    const quotesChunks = chunkArrayBySize(syncConfig.quotes || [], SYNC_CHUNK_SIZE);
+    const backgroundChunks = chunkArrayBySize(syncConfig.backgrounds || [], SYNC_CHUNK_SIZE);
+    const index = {
+        version: 2,
+        linksChunks: linksChunks.length,
+        quotesChunks: quotesChunks.length,
+        backgroundsChunks: backgroundChunks.length
+    };
+    const payload = {
+        payload: {
+            [SYNC_CORE_KEY]: core,
+            [SYNC_INDEX_KEY]: index,
+            ...buildChunkEntries(SYNC_LINKS_PREFIX, linksChunks),
+            ...buildChunkEntries(SYNC_QUOTES_PREFIX, quotesChunks),
+            ...buildChunkEntries(SYNC_BACKGROUNDS_PREFIX, backgroundChunks)
+        },
+        index
+    };
+    const bytes = estimateSyncPayloadBytes(payload.payload);
+    return {
+        ...payload,
+        bytes
+    };
+}
+
+function estimateSyncPayloadBytes(payload) {
+    return Object.entries(payload).reduce((total, [key, value]) => {
+        return total + JSON.stringify(key).length + JSON.stringify(value).length;
+    }, 0);
+}
+
+async function clearSyncStorage() {
+    const stored = await storageSync.get(SYNC_INDEX_KEY);
+    const index = stored[SYNC_INDEX_KEY];
+    const chunkKeys = index
+        ? [
+              ...getChunkKeys(SYNC_LINKS_PREFIX, index.linksChunks),
+              ...getChunkKeys(SYNC_QUOTES_PREFIX, index.quotesChunks),
+              ...getChunkKeys(SYNC_BACKGROUNDS_PREFIX, index.backgroundsChunks)
+          ]
+        : [];
+    const keys = [SYNC_KEY, SYNC_CORE_KEY, SYNC_INDEX_KEY, SYNC_TEST_KEY, ...chunkKeys];
+    if (keys.length) {
+        await storageSync.remove(keys);
+    }
+}
+
 async function setSyncConfig(syncConfig) {
     if (chrome?.storage?.sync) {
+        const stored = await storageSync.get(SYNC_INDEX_KEY);
+        const { payload, index, bytes } = buildSyncPayload(syncConfig);
+        if (bytes >= SYNC_TOTAL_QUOTA_BYTES) {
+            return {
+                ok: false,
+                error: `Sync storage limit reached (~100KB). Current payload ~${Math.ceil(bytes / 1024)}KB.`
+            };
+        }
+        const oldIndex = stored[SYNC_INDEX_KEY];
+        const staleKeys = oldIndex
+            ? [
+                  ...getChunkKeys(SYNC_LINKS_PREFIX, oldIndex.linksChunks),
+                  ...getChunkKeys(SYNC_QUOTES_PREFIX, oldIndex.quotesChunks),
+                  ...getChunkKeys(SYNC_BACKGROUNDS_PREFIX, oldIndex.backgroundsChunks)
+              ]
+            : [];
+        if (staleKeys.length) {
+            await new Promise((resolve) => chrome.storage.sync.remove(staleKeys, resolve));
+        }
         return new Promise((resolve) => {
-            chrome.storage.sync.set({ [SYNC_KEY]: syncConfig }, () => {
+            chrome.storage.sync.set(payload, () => {
                 const error = chrome.runtime?.lastError;
                 if (error) {
                     resolve({ ok: false, error: error.message });
                     return;
                 }
-                resolve({ ok: true });
+                chrome.storage.sync.remove(SYNC_KEY, () => {
+                    resolve({ ok: true, index });
+                });
             });
         });
     }
-    await storageSync.set({ [SYNC_KEY]: syncConfig });
+    const stored = await storageSync.get(SYNC_INDEX_KEY);
+    const { payload, bytes } = buildSyncPayload(syncConfig);
+    if (bytes >= SYNC_TOTAL_QUOTA_BYTES) {
+        return {
+            ok: false,
+            error: `Sync storage limit reached (~100KB). Current payload ~${Math.ceil(bytes / 1024)}KB.`
+        };
+    }
+    const oldIndex = stored[SYNC_INDEX_KEY];
+    const staleKeys = oldIndex
+        ? [
+              ...getChunkKeys(SYNC_LINKS_PREFIX, oldIndex.linksChunks),
+              ...getChunkKeys(SYNC_QUOTES_PREFIX, oldIndex.quotesChunks),
+              ...getChunkKeys(SYNC_BACKGROUNDS_PREFIX, oldIndex.backgroundsChunks)
+          ]
+        : [];
+    if (staleKeys.length) {
+        await storageSync.remove(staleKeys);
+    }
+    await storageSync.set(payload);
+    await storageSync.remove(SYNC_KEY);
     return { ok: true };
+}
+
+async function runSyncQuotaTest(kilobytes = 12) {
+    if (!chrome?.storage?.sync) {
+        return { ok: false, error: "Sync storage unavailable" };
+    }
+    const payload = { [SYNC_TEST_KEY]: "x".repeat(Math.max(1, kilobytes) * 1024) };
+    return new Promise((resolve) => {
+        chrome.storage.sync.set(payload, () => {
+            const error = chrome.runtime?.lastError;
+            if (error) {
+                resolve({ ok: false, error: error.message });
+                return;
+            }
+            chrome.storage.sync.remove(SYNC_TEST_KEY, () => resolve({ ok: true }));
+        });
+    });
 }
 
 async function refreshSyncStatus() {
@@ -2004,3 +2205,7 @@ function fileToDataUrl(file) {
         reader.readAsDataURL(file);
     });
 }
+
+window.mothershipDebug = {
+    runSyncQuotaTest
+};
