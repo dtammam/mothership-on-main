@@ -566,6 +566,8 @@ button:hover,
 
 .sync-row {
     display: flex;
+    align-items: center;
+    gap: 8px;
     justify-content: flex-start;
 }
 
@@ -596,6 +598,21 @@ button:hover,
 .sync-status.warn {
     color: #ffd79b;
     border-color: rgba(255, 215, 155, 0.5);
+}
+
+.sync-usage {
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    opacity: 0.9;
+}
+
+.sync-usage.warn {
+    color: #ffd79b;
+}
+
+.sync-usage.crit {
+    color: #f3b1b1;
 }
 
 .editor-list {
