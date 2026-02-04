@@ -58,9 +58,9 @@ This extension does the following:
 
 See [PRIVACY](PRIVACY.md).
 
-## Changelog
+## Project history
 
-See [CHANGELOG](CHANGELOG.md).
+- See `PROGRESS.md` for release-style notes and quick human/agent context (timestamped, single-line entries).
 
 ## Credits
 

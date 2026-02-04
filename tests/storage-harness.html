@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Mothership Storage Harness</title>
+    <style>
+        body { font-family: "Segoe UI", sans-serif; margin: 24px; background: #f6f8fb; color: #111; }
+        h1 { margin: 0 0 12px; font-size: 20px; }
+        .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-bottom: 16px; }
+        button { padding: 10px 12px; border: 1px solid #ccc; border-radius: 6px; background: #fff; cursor: pointer; text-align: left; }
+        button.primary { background: #0f6cbd; color: #fff; border-color: #0f6cbd; }
+        button.danger { background: #d13438; color: #fff; border-color: #d13438; }
+        label { font-size: 12px; color: #555; display: block; margin-bottom: 4px; }
+        input[type="number"] { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; }
+        .pill { display: inline-block; padding: 4px 8px; border-radius: 999px; background: #e5efff; color: #0f6cbd; font-size: 12px; margin-right: 8px; }
+        pre { background: #0d1117; color: #e6edf3; padding: 12px; border-radius: 8px; min-height: 160px; white-space: pre-wrap; word-break: break-word; }
+    </style>
+</head>
+<body>
+    <h1>Storage Harness (dev only)</h1>
+    <div class="pill" id="backend-pill">Backend: simulator</div>
+    <div class="controls">
+        <div>
+            <label for="target-kb">Generate config size (KB, approx)</label>
+            <input id="target-kb" type="number" min="4" max="120" value="90" />
+        </div>
+        <div>
+            <label>&nbsp;</label>
+            <button id="toggle-backend">Use real sync</button>
+        </div>
+        <div>
+            <label>&nbsp;</label>
+            <button id="save-small" class="primary">Save &amp; load small (default)</button>
+        </div>
+        <div>
+            <label>&nbsp;</label>
+            <button id="save-target">Save &amp; load target size</button>
+        </div>
+        <div>
+            <label>&nbsp;</label>
+            <button id="shrink-fit">Import + auto-shrink to fit</button>
+        </div>
+        <div>
+            <label for="import-config">Import config JSON</label>
+            <input id="import-config" type="file" accept=".json,application/json" />
+        </div>
+        <div>
+            <label>&nbsp;</label>
+            <button id="import-and-save" class="primary">Import + save &amp; load</button>
+        </div>
+        <div>
+            <label>&nbsp;</label>
+            <button id="export-sync">Export current sync state</button>
+        </div>
+        <div>
+            <label>&nbsp;</label>
+            <button id="migrate-legacy">Write legacy single key → migrate</button>
+        </div>
+        <div>
+            <label>&nbsp;</label>
+            <button id="corrupt-chunk" class="danger">Simulate missing chunk (sim only)</button>
+        </div>
+        <div>
+            <label>&nbsp;</label>
+            <button id="clear-storage">Clear test storage keys</button>
+        </div>
+        <div>
+            <label>&nbsp;</label>
+            <label style="display:flex;align-items:center;gap:8px;">
+                <input id="auto-clear" type="checkbox" />
+                Auto-clear storage before save
+            </label>
+        </div>
+    </div>
+
+    <div id="estimate" style="background:#fff;border:1px solid #d0d7de;border-radius:8px;padding:12px;margin-bottom:16px;">
+        <strong>Current estimate</strong>
+        <div id="size-readout" style="font-family:Consolas,monospace;font-size:12px;white-space:pre-line;margin-top:6px;">
+            (run a save or import to see details)
+        </div>
+    </div>
+    <pre id="log">Ready.</pre>
+
+<script src="storage-harness-boot.js"></script>
+<script src="../js/script.js"></script>
+<script src="storage-harness.js"></script>
+</body>
+</html>
