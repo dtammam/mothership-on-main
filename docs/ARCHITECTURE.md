@@ -52,3 +52,4 @@ Meta example:
   "chunkCount": 4,
   "updatedAt": "2026-02-03T00:00:00.000Z"
 }
+"\n### Notes for contributors\n- V2 writes are two-phase (temp → final) with per-item and total quota preflight.\n- Legacy keys (single mothershipSyncConfig and v1 chunked) auto-migrate on first load; they remain until v2 write succeeds.\n- Storage harness lives in tests/ and can be opened directly for quota/migration exercises; it is not referenced in the manifest.\n- Keep PROGRESS.md updated with timestamped, human-readable summaries; README points there for release history.\n"

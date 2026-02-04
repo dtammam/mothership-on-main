@@ -1,12 +1,32 @@
 # Testing
 
-This project is a simple, self-contained web extension, so I have not set up a formal test framework. If it continues to expand, I will likely add unit tests and functional or integration tests. For now, there is not much to integrate beyond the browser environment itself.
+This project is a simple, self-contained web extension. No formal test runner yet; manual flows plus a storage harness cover current needs.
 
-Checklist
+## Manual UI checklist
+- Load as unpacked in Edge/Chrome; open a new tab and confirm render.
+- Search: submit a query; verify it opens correctly.
+- Links: click a link; rearrange sections/links via Rearrange; Finish.
+- Customize: add a link, category, and search engine; reorder links inside Customize.
+- Import/export: export config, re-import; import quotes and confirm replacement.
+- Backgrounds: switch gradient/image/blur; upload an image and see Uploaded images selected.
 
-- Load the extension as unpacked and open a new tab; confirm the page renders without errors.
-- Search: submit a query and verify it opens in the same tab.
-- Links: click a link and verify it opens in the same tab; switch to Rearrange and move links/sections, then Finish.
-- Customize: add a link, category, and search engine from the top pills; reorder links inside Customize.
-- Import/export: export config, then import it; import quotes and confirm they replace existing lines.
-- Backgrounds: switch between gradients, uploaded images, and blurred images; upload an image and confirm the dropdown switches to Uploaded images.
+## Storage harness (quota/migration/debug)
+- Open directly (not in manifest): `chrome-extension://<EXT_ID>/tests/storage-harness.html`
+- Default backend: **simulator** (enforces 8KB per item, ~100KB total). Toggle to real sync only when desired.
+- Controls:
+  - Save & load small / target size (with size estimator).
+  - Import + save & load (uses v2 chunking).
+  - Import + auto-shrink to fit (trims backgrounds → quotes → links until under quota).
+  - Write legacy single key → migrate (seed v1 key and auto-migrate to v2).
+  - Export current sync state (v2 + legacy keys).
+  - Auto-clear storage before save (cleans v2 + legacy keys).
+- Estimate card shows config bytes, chunk count, largest item vs 8KB, total vs 100KB, headroom.
+- Simulator fault injection: `msomStorage.setSimulatorEnabled(true, () => "fail")` in console to force errors and verify two-phase safety.
+
+## Stability notes
+- Harness lives in `tests/` and is not referenced by the manifest; users won’t hit it unless they navigate by URL.
+- Sync headroom badge in settings shows approximate usage and free space; turns amber/red near limit.
+- Legacy configs auto-migrate to v2 on first load; legacy keys stay until a successful v2 write.
+
+## Future
+- Add unit/integration tests as scope grows; current focus is manual + harness coverage.

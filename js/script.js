@@ -5,12 +5,13 @@
     Date: 4/20/2023
 */
 
-const SYNC_KEY = "mothershipSyncConfig"; // Legacy single-key
-const SYNC_CORE_KEY = "mothershipSyncCore"; // Legacy chunked core (v1)
-const SYNC_INDEX_KEY = "mothershipSyncIndex"; // Legacy chunked index (v1)
-const SYNC_LINKS_PREFIX = "mothershipSyncLinksChunk"; // Legacy chunked links (v1)
-const SYNC_QUOTES_PREFIX = "mothershipSyncQuotesChunk"; // Legacy chunked quotes (v1)
-const SYNC_BACKGROUNDS_PREFIX = "mothershipSyncBackgroundsChunk"; // Legacy chunked backgrounds (v1)
+// Legacy storage keys (pre-v2)
+const SYNC_KEY = "mothershipSyncConfig"; // single item
+const SYNC_CORE_KEY = "mothershipSyncCore"; // v1 core object
+const SYNC_INDEX_KEY = "mothershipSyncIndex"; // v1 chunk index
+const SYNC_LINKS_PREFIX = "mothershipSyncLinksChunk"; // v1 links chunks
+const SYNC_QUOTES_PREFIX = "mothershipSyncQuotesChunk"; // v1 quotes chunks
+const SYNC_BACKGROUNDS_PREFIX = "mothershipSyncBackgroundsChunk"; // v1 background chunks
 const SYNC_TEST_KEY = "mothershipSyncQuotaTest";
 const LOCAL_ASSETS_KEY = "mothershipLocalAssets";
 const LEGACY_KEY = "mothershipConfig";
@@ -18,9 +19,10 @@ const SYNC_META_KEY = "mothershipSyncMeta";
 const FAVICON_CACHE_KEY = "mothershipFaviconCache";
 const BACKGROUND_THUMBS_KEY = "mothershipBackgroundThumbs";
 const DEFAULT_LINK_SECTION = "Links";
-const SYNC_CHUNK_CHAR_TARGET = 6800; // target payload chars per chunk (value only)
-const SYNC_TOTAL_QUOTA_BYTES = 100 * 1024; // Chromium documented total sync quota
-const SYNC_PER_ITEM_LIMIT = 8192; // Chromium per-item limit (approx; key + JSON(value))
+// V2 sync format (string-chunked, versioned)
+const SYNC_CHUNK_CHAR_TARGET = 6800; // keep value chunk small so key+value stays under 8KB
+const SYNC_TOTAL_QUOTA_BYTES = 100 * 1024; // documented total sync quota (~100KB)
+const SYNC_PER_ITEM_LIMIT = 8192; // per-item quota (key + JSON(value))
 const SYNC_VERSION = 2;
 const V2_META_KEY = "msom:cfg:v2:meta";
 const V2_CHUNK_PREFIX = "msom:cfg:v2:chunk:";
@@ -68,6 +70,8 @@ const storageLocal = {
     }
 };
 
+// storageSync wraps chrome.storage.sync with a simulator fallback and quota enforcement.
+// In simulator mode we enforce the same per-item/total limits and allow fault injection.
 const storageSync = {
     async get(keys) {
         if (!shouldUseSimSync() && chrome?.storage?.sync) {
@@ -226,6 +230,7 @@ async function init() {
     setupGridObserver();
 }
 
+// Loads config, migrates legacy to v2, applies defaults + local assets.
 async function loadConfig() {
     const defaults = await loadDefaultConfig();
     const storedLocal = await storageLocal.get(LOCAL_ASSETS_KEY);
@@ -237,6 +242,7 @@ async function loadConfig() {
     return withAssets;
 }
 
+// Fetches config.json; falls back to built-in defaults on error.
 async function loadDefaultConfig() {
     try {
         const response = await fetch("config.json");
@@ -249,7 +255,9 @@ async function loadDefaultConfig() {
     }
 }
 
+// Prefers v2 data; otherwise migrates v1/legacy into v2 and returns config + merged assets.
 async function loadSyncConfigCore(defaults, existingLocalAssets = {}) {
+    // Prefer v2; migrate legacy formats if needed.
     const v2 = await loadV2SyncConfig();
     if (v2.status === "ok") {
         return { config: v2.config, localAssets: existingLocalAssets };
@@ -277,6 +285,7 @@ async function loadSyncConfigCore(defaults, existingLocalAssets = {}) {
     return { config: syncConfig, localAssets: mergedAssets };
 }
 
+// Merges user override into defaults while preserving shapes.
 function mergeConfig(base, override) {
     if (!override) {
         return structuredClone(base);
@@ -305,6 +314,7 @@ function mergeConfig(base, override) {
     };
 }
 
+// Applies local assets (data URIs) to a synced config.
 function applyLocalAssets(config, localAssets) {
     const assets = localAssets || {};
     const backgroundUploads = Array.isArray(assets.backgroundUploads) ? assets.backgroundUploads : [];
@@ -1958,6 +1968,7 @@ function collectBranding() {
     return { title, subtitle, quotesTitle };
 }
 
+// Splits config into sync-safe data and local-only assets (data URIs).
 function splitConfig(config) {
     const linksWithIds = ensureLinkIds(config.links || []);
     const localAssets = {
@@ -1989,6 +2000,7 @@ function splitConfig(config) {
     };
 }
 
+// Merges two local-asset blobs (uploads + icon overrides).
 function mergeLocalAssets(base = {}, incoming = {}) {
     return {
         backgroundUploads: [...(base.backgroundUploads || []), ...(incoming.backgroundUploads || [])],
@@ -1996,6 +2008,7 @@ function mergeLocalAssets(base = {}, incoming = {}) {
     };
 }
 
+// Legacy v1: rebuilds config from core/index and array chunks.
 async function loadChunkedSyncConfig(storedSync) {
     const index = storedSync[SYNC_INDEX_KEY];
     const core = storedSync[SYNC_CORE_KEY] || {};
@@ -2019,6 +2032,7 @@ async function loadChunkedSyncConfig(storedSync) {
     };
 }
 
+// Collects chunk arrays for a given prefix and count.
 function collectChunks(chunks, prefix, count) {
     if (!count) {
         return [];
@@ -2034,6 +2048,7 @@ function collectChunks(chunks, prefix, count) {
     return items;
 }
 
+// Builds v1 chunk keys for a given prefix/count.
 function getChunkKeys(prefix, count) {
     if (!count) {
         return [];
@@ -2045,10 +2060,12 @@ function getChunkKeys(prefix, count) {
     return keys;
 }
 
+// Zero-pads chunk index to three digits.
 function padChunkIndex(index) {
     return String(index).padStart(3, "0");
 }
 
+// Splits a string into slices of maxChars for v2 chunk storage.
 function chunkStringBySize(value, maxChars) {
     const chunks = [];
     for (let i = 0; i < value.length; i += maxChars) {
@@ -2057,6 +2074,7 @@ function chunkStringBySize(value, maxChars) {
     return chunks;
 }
 
+// Builds v2 chunk keys for the given count/prefix.
 function buildV2ChunkKeys(count, prefix = V2_CHUNK_PREFIX) {
     const keys = [];
     for (let i = 0; i < count; i += 1) {
@@ -2065,6 +2083,7 @@ function buildV2ChunkKeys(count, prefix = V2_CHUNK_PREFIX) {
     return keys;
 }
 
+// Computes total bytes across all items as key.length + JSON(value).length.
 function calculatePayloadBytes(payload) {
     return Object.entries(payload).reduce((total, [key, value]) => {
         return total + key.length + JSON.stringify(value ?? null).length;
@@ -2072,6 +2091,7 @@ function calculatePayloadBytes(payload) {
 }
 
 function estimateSyncUsage(syncConfig) {
+    // Estimator mirrors actual chunking but omits timestamps to keep values stable.
     const serialized = JSON.stringify(syncConfig ?? {});
     const chunks = chunkStringBySize(serialized, SYNC_CHUNK_CHAR_TARGET);
     const meta = {
@@ -2101,6 +2121,7 @@ function estimateSyncUsage(syncConfig) {
     };
 }
 
+// Validates per-item and total quota; returns { ok, error, totalBytes? }.
 function preflightV2Payload(payload) {
     const perItemError = Object.entries(payload).find(([key, value]) => {
         const bytes = key.length + JSON.stringify(value ?? null).length;
@@ -2116,11 +2137,14 @@ function preflightV2Payload(payload) {
     return { ok: true, totalBytes };
 }
 
+// Returns JSON string length for a config (approx size).
 function getConfigSizeBytes(config) {
     return JSON.stringify(config ?? {}).length;
 }
 
+// Reads v2 meta/chunks, cleans temp keys, validates checksum and structure.
 async function loadV2SyncConfig() {
+    // Detect and clean temp keys, then read v2 meta+chunks; validate chunkCount and checksum.
     const stored = await storageSync.get([V2_META_KEY, V2_TMP_META_KEY]);
     const tempMeta = stored[V2_TMP_META_KEY];
     if (tempMeta && tempMeta.chunkCount) {
@@ -2159,6 +2183,7 @@ async function loadV2SyncConfig() {
     }
 }
 
+// Removes any temporary v2 keys left by an interrupted write.
 async function cleanupTempV2Keys(meta) {
     const tempKeys = [V2_TMP_META_KEY, ...buildV2ChunkKeys(meta.chunkCount, V2_TMP_CHUNK_PREFIX)];
     try {
@@ -2168,7 +2193,9 @@ async function cleanupTempV2Keys(meta) {
     }
 }
 
+// Saves using two-phase temp→final writes with per-item/total quota preflight.
 async function saveSyncConfigV2(syncConfig, options = {}) {
+    // Two-phase write: temp -> final, with quota preflight on both; legacy keys cleaned post-success.
     const opts = { silent: false, ...options };
     const serialized = JSON.stringify(syncConfig ?? {});
     const chunks = chunkStringBySize(serialized, SYNC_CHUNK_CHAR_TARGET);
@@ -2242,6 +2269,7 @@ async function saveSyncConfigV2(syncConfig, options = {}) {
     return { ok: true, meta };
 }
 
+// Clears v2 + legacy sync keys; used by harness/debug flows.
 async function clearSyncStorage() {
     const stored = await storageSync.get([SYNC_INDEX_KEY, V2_META_KEY]);
     const legacyIndex = stored[SYNC_INDEX_KEY];
@@ -2269,10 +2297,12 @@ async function clearSyncStorage() {
     }
 }
 
+// Public save wrapper used by UI; delegates to v2 save.
 async function setSyncConfig(syncConfig) {
     return saveSyncConfigV2(syncConfig);
 }
 
+// Attempts to write N KB to sync (or simulator) to probe quota behavior.
 async function runSyncQuotaTest(kilobytes = 12) {
     const payload = { [SYNC_TEST_KEY]: "x".repeat(Math.max(1, kilobytes) * 1024) };
     try {
@@ -2326,6 +2356,7 @@ function setSyncStatus(label, tone) {
     }
 }
 
+// Updates the settings badge with current sync usage/headroom.
 function updateSyncUsage(config) {
     const badge = document.getElementById("sync-usage");
     if (!badge) {

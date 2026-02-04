@@ -92,6 +92,8 @@ If no automated test runner exists, add a minimal `test.html` or `debug.html` th
 - Avoid global state. Centralize storage keys/constants.
 - Add comments explaining quota margins and why chunk sizing is conservative.
 - Prefer async/await.
+- Add a short, human-friendly one-liner atop new functions so intent is clear at a glance (for devs and AI assistants).
+- Log milestone-level changes in `PROGRESS.md` as single-line, timestamped entries (YYYY-MM-DD HH:mm - branchname - summary) whenever significant work ships.
 
 ## What to do when uncertain
 Stop guessing. Inspect the repo to confirm:
