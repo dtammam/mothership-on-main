@@ -29,6 +29,9 @@
     "quotes": true,
     "links": true
   },
+  "privacy": {
+    "autoFetchFavicons": true
+  },
   "collapsedSections": [],
   "search": {
     "defaultEngine": "google",

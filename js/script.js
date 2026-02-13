@@ -39,6 +39,7 @@ const fallbackConfig = {
     backgroundMode: "gradient_signature",
     layout: { resizable: false, maxColumns: 4, minCardWidth: 180, pageWidth: 72 },
     visibility: { search: true, quotes: true, links: true },
+    privacy: { autoFetchFavicons: true },
     collapsedSections: [],
     search: { defaultEngine: "google", engines: [] }
 };
@@ -328,6 +329,12 @@ function mergeConfig(base, override) {
                 typeof override.visibility?.links === "boolean"
                     ? override.visibility.links
                     : Boolean(base.visibility?.links ?? true)
+        },
+        privacy: {
+            autoFetchFavicons:
+                typeof override.privacy?.autoFetchFavicons === "boolean"
+                    ? override.privacy.autoFetchFavicons
+                    : Boolean(base.privacy?.autoFetchFavicons ?? true)
         },
         collapsedSections: Array.isArray(override.collapsedSections)
             ? [...new Set(override.collapsedSections.filter((name) => typeof name === "string" && name.trim().length > 0))]
@@ -620,13 +627,17 @@ async function resolveFavicon(link) {
     if (link.iconOverride) {
         return link.iconOverride;
     }
+    const autoFetchFavicons = activeConfig?.privacy?.autoFetchFavicons !== false;
     const url = safeParseUrl(link.url);
     if (!url) {
-        return "";
+        return autoFetchFavicons ? "" : "images/icon.png";
     }
     const host = url.hostname.toLowerCase();
     if (faviconCache[host]) {
         return faviconCache[host];
+    }
+    if (!autoFetchFavicons) {
+        return "images/icon.png";
     }
 
     const candidates = [`${url.origin}/favicon.ico`, `${url.origin}/favicon.png`];
@@ -724,6 +735,7 @@ function setupSettings() {
     const visibilitySearch = document.getElementById("visibility-search");
     const visibilityQuotes = document.getElementById("visibility-quotes");
     const visibilityLinks = document.getElementById("visibility-links");
+    const autoFetchFavicons = document.getElementById("privacy-auto-fetch-favicons");
     const settingsNav = document.querySelector(".settings-nav");
     const quickSectionForm = document.querySelector("[data-nav-popover]");
     const quickSectionInput = document.getElementById("quick-section-name");
@@ -1059,6 +1071,13 @@ function setupSettings() {
         applyVisibility(activeConfig.visibility);
     };
 
+    const previewPrivacy = () => {
+        const privacy = collectPrivacy();
+        activeConfig = { ...activeConfig, privacy };
+        renderSections(activeConfig);
+        updateGridColumns(activeConfig.layout);
+    };
+
     layoutResizable.addEventListener("change", previewLayout);
     layoutMaxColumns.addEventListener("change", previewLayout);
     layoutMinCardWidth.addEventListener("change", previewLayout);
@@ -1066,6 +1085,7 @@ function setupSettings() {
     visibilitySearch.addEventListener("change", previewVisibility);
     visibilityQuotes.addEventListener("change", previewVisibility);
     visibilityLinks.addEventListener("change", previewVisibility);
+    autoFetchFavicons.addEventListener("change", previewPrivacy);
 
     backgroundMode.addEventListener("change", () => {
         activeConfig = { ...activeConfig, backgroundMode: backgroundMode.value };
@@ -1385,6 +1405,7 @@ function renderSettings(config) {
     renderSearchEditor(config.search);
     renderLayoutEditor(config.layout);
     renderVisibilityEditor(config.visibility);
+    renderPrivacyEditor(config.privacy);
     renderBrandingEditor(config.branding);
     renderBackgroundModeEditor(config.backgroundMode);
 }
@@ -1709,6 +1730,11 @@ function renderVisibilityEditor(visibility) {
     linksInput.checked = visibility?.links !== false;
 }
 
+function renderPrivacyEditor(privacy) {
+    const autoFetchFavicons = document.getElementById("privacy-auto-fetch-favicons");
+    autoFetchFavicons.checked = privacy?.autoFetchFavicons !== false;
+}
+
 function addLinkRow(sectionName) {
     const container = document.getElementById("links-editor");
     const template = document.getElementById("link-row-template");
@@ -1882,6 +1908,7 @@ function collectConfigFromEditors() {
     const search = collectSearch();
     const layout = collectLayout();
     const visibility = collectVisibility();
+    const privacy = collectPrivacy();
     const backgroundMode = collectBackgroundMode();
     const nextSections = deriveSections(links, sections);
     return {
@@ -1893,6 +1920,7 @@ function collectConfigFromEditors() {
         backgroundMode,
         layout,
         visibility,
+        privacy,
         collapsedSections: collectCollapsedSectionsFromMain(),
         search
     };
@@ -2147,6 +2175,11 @@ function collectVisibility() {
     const quotes = document.getElementById("visibility-quotes")?.checked !== false;
     const links = document.getElementById("visibility-links")?.checked !== false;
     return { search, quotes, links };
+}
+
+function collectPrivacy() {
+    const autoFetchFavicons = document.getElementById("privacy-auto-fetch-favicons")?.checked !== false;
+    return { autoFetchFavicons };
 }
 
 function collectBackgroundMode() {
