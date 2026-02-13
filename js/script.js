@@ -1978,7 +1978,7 @@ function updateMainDragState() {
 
 function updateGridColumns(layout) {
     const isResizable = Boolean(layout?.resizable);
-    const maxColumns = isResizable ? Math.min(8, Math.max(1, layout?.maxColumns || 4)) : 4;
+    const maxColumns = isResizable ? Math.min(10, Math.max(1, layout?.maxColumns || 4)) : 4;
     const minCardWidth = isResizable ? Math.max(120, layout?.minCardWidth || 180) : 180;
     document.querySelectorAll(".links-grid").forEach((grid) => {
         const width = grid.clientWidth || 0;
@@ -2131,7 +2131,7 @@ function collectLayout() {
             pageWidth: 72
         };
     }
-    const maxColumns = Math.min(8, Math.max(2, parseInt(input.value, 10) || 4));
+    const maxColumns = Math.min(10, Math.max(2, parseInt(input.value, 10) || 4));
     const minCardWidth = Math.min(520, Math.max(120, parseInt(minCardWidthInput.value, 10) || 180));
     const pageWidth = Math.min(100, Math.max(60, parseInt(pageWidthInput.value, 10) || 72));
     return {
