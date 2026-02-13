@@ -23,6 +23,11 @@ jobs:
         shell: pwsh
         run: ./scripts/package-edge.ps1 -OutputDir dist/edge-packages
 
+      - name: Build standardized release body
+        id: release_meta
+        shell: pwsh
+        run: ./scripts/build-release-body.ps1 -OutputDir dist/edge-packages -ProgressEntries 5
+
       - name: Upload package artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -36,24 +41,26 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: main-${{ github.sha }}
-          name: Main build ${{ github.sha }}
+          name: Main build v${{ steps.release_meta.outputs.manifest_version }} (${{ steps.release_meta.outputs.short_sha }})
           target_commitish: ${{ github.sha }}
-          prerelease: true
+          prerelease: false
           generate_release_notes: false
-          body: |
-            Automated merge build from `main`.
-            Includes QA/prod Edge extension zips and SHA-256 checksum files.
+          body_path: ${{ steps.release_meta.outputs.release_body_path }}
           files: |
             dist/edge-packages/*.zip
             dist/edge-packages/*.sha256
             dist/edge-packages/checksums.txt
+            dist/edge-packages/release-body.md
 
       - name: Publish release assets for version tags
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          generate_release_notes: true
+          name: Release ${{ github.ref_name }} (manifest v${{ steps.release_meta.outputs.manifest_version }})
+          generate_release_notes: false
+          body_path: ${{ steps.release_meta.outputs.release_body_path }}
           files: |
             dist/edge-packages/*.zip
             dist/edge-packages/*.sha256
             dist/edge-packages/checksums.txt
+            dist/edge-packages/release-body.md
