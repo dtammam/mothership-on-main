@@ -37,9 +37,10 @@ If you are working on the codebase locally, you can still load it as an unpacked
 - On each merge to `main`, GitHub Actions runs `.github/workflows/edge-packages.yml` and builds two zip packages:
 - `*-qa.zip`: `manifest.json` name is suffixed with ` QA`.
 - `*-prod.zip`: `manifest.json` name remains unchanged for production.
-- Each merge to `main` creates a GitHub Release entry (`main-<commit-sha>`, marked prerelease) and uploads both zips plus hash files (`*.sha256` and `checksums.txt`).
+- Each merge to `main` creates a GitHub Release entry (`main-<commit-sha>`) and uploads both zips plus hash files (`*.sha256` and `checksums.txt`).
 - On pushes to tags matching `v*`, the same files are also attached to a versioned GitHub Release.
 - The workflow still uploads all package files as Actions artifacts for CI traceability.
+- Release descriptions are standardized and include manifest version, zip SHA-256 values, and recent `PROGRESS.md` entries.
 
 Integrity verification:
 - Every zip gets a SHA-256 hash in a sidecar file and in `checksums.txt`.
