@@ -34,17 +34,14 @@ function Copy-PackageContent {
     }
 }
 
-function Write-ShaFile {
+function Get-ChecksumLine {
     param(
         [string]$ZipPath
     )
 
     $hash = (Get-FileHash -Path $ZipPath -Algorithm SHA256).Hash.ToLowerInvariant()
     $zipName = Split-Path -Path $ZipPath -Leaf
-    $line = "$hash  $zipName"
-    $shaPath = "$ZipPath.sha256"
-    Set-Content -Path $shaPath -Value "$line`n" -Encoding ascii
-    return $line
+    return "$hash  $zipName"
 }
 
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
@@ -92,6 +89,8 @@ try {
 
     $prodZipPath = Join-Path $resolvedOutputDir "$slug-$version-prod.zip"
     $qaZipPath = Join-Path $resolvedOutputDir "$slug-$version-qa.zip"
+    $prodShaPath = "$prodZipPath.sha256"
+    $qaShaPath = "$qaZipPath.sha256"
 
     if (Test-Path -LiteralPath $prodZipPath) {
         Remove-Item -LiteralPath $prodZipPath -Force
@@ -99,13 +98,19 @@ try {
     if (Test-Path -LiteralPath $qaZipPath) {
         Remove-Item -LiteralPath $qaZipPath -Force
     }
+    if (Test-Path -LiteralPath $prodShaPath) {
+        Remove-Item -LiteralPath $prodShaPath -Force
+    }
+    if (Test-Path -LiteralPath $qaShaPath) {
+        Remove-Item -LiteralPath $qaShaPath -Force
+    }
 
     Compress-Archive -Path (Join-Path $prodStage "*") -DestinationPath $prodZipPath -CompressionLevel Optimal
     Compress-Archive -Path (Join-Path $qaStage "*") -DestinationPath $qaZipPath -CompressionLevel Optimal
 
     $hashLines = @()
-    $hashLines += Write-ShaFile -ZipPath $qaZipPath
-    $hashLines += Write-ShaFile -ZipPath $prodZipPath
+    $hashLines += Get-ChecksumLine -ZipPath $qaZipPath
+    $hashLines += Get-ChecksumLine -ZipPath $prodZipPath
     Set-Content -Path (Join-Path $resolvedOutputDir "checksums.txt") -Value (($hashLines -join "`n") + "`n") -Encoding ascii
 
     Write-Host "Created packages:"

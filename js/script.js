@@ -19,6 +19,7 @@ const SYNC_META_KEY = "mothershipSyncMeta";
 const FAVICON_CACHE_KEY = "mothershipFaviconCache";
 const BACKGROUND_THUMBS_KEY = "mothershipBackgroundThumbs";
 const DEFAULT_LINK_SECTION = "Links";
+const NEW_SECTION_OPTION = "__new__";
 // V2 sync format (string-chunked, versioned)
 const SYNC_CHUNK_CHAR_TARGET = 6800; // keep value chunk small so key+value stays under 8KB
 const SYNC_TOTAL_QUOTA_BYTES = 100 * 1024; // documented total sync quota (~100KB)
@@ -36,7 +37,10 @@ const fallbackConfig = {
     quotes: [],
     backgrounds: [],
     backgroundMode: "gradient_signature",
-    layout: { maxColumns: 4, minCardWidth: 180 },
+    layout: { resizable: false, maxColumns: 4, minCardWidth: 180, pageWidth: 72 },
+    visibility: { search: true, quotes: true, links: true },
+    privacy: { autoFetchFavicons: true },
+    collapsedSections: [],
     search: { defaultEngine: "google", engines: [] }
 };
 
@@ -304,9 +308,39 @@ function mergeConfig(base, override) {
         backgrounds: Array.isArray(override.backgrounds) ? override.backgrounds : base.backgrounds,
         backgroundMode: override.backgroundMode || base.backgroundMode,
         layout: {
+            resizable:
+                typeof override.layout?.resizable === "boolean"
+                    ? override.layout.resizable
+                    : Boolean(base.layout?.resizable ?? false),
             maxColumns: Number.isFinite(override.layout?.maxColumns) ? override.layout.maxColumns : base.layout.maxColumns,
-            minCardWidth: Number.isFinite(override.layout?.minCardWidth) ? override.layout.minCardWidth : base.layout.minCardWidth
+            minCardWidth: Number.isFinite(override.layout?.minCardWidth) ? override.layout.minCardWidth : base.layout.minCardWidth,
+            pageWidth: Number.isFinite(override.layout?.pageWidth) ? override.layout.pageWidth : base.layout.pageWidth
         },
+        visibility: {
+            search:
+                typeof override.visibility?.search === "boolean"
+                    ? override.visibility.search
+                    : Boolean(base.visibility?.search ?? true),
+            quotes:
+                typeof override.visibility?.quotes === "boolean"
+                    ? override.visibility.quotes
+                    : Boolean(base.visibility?.quotes ?? true),
+            links:
+                typeof override.visibility?.links === "boolean"
+                    ? override.visibility.links
+                    : Boolean(base.visibility?.links ?? true)
+        },
+        privacy: {
+            autoFetchFavicons:
+                typeof override.privacy?.autoFetchFavicons === "boolean"
+                    ? override.privacy.autoFetchFavicons
+                    : Boolean(base.privacy?.autoFetchFavicons ?? true)
+        },
+        collapsedSections: Array.isArray(override.collapsedSections)
+            ? [...new Set(override.collapsedSections.filter((name) => typeof name === "string" && name.trim().length > 0))]
+            : Array.isArray(base.collapsedSections)
+              ? [...new Set(base.collapsedSections.filter((name) => typeof name === "string" && name.trim().length > 0))]
+              : [],
         search: {
             defaultEngine: override.search?.defaultEngine || base.search.defaultEngine,
             engines: Array.isArray(override.search?.engines) ? override.search.engines : base.search.engines
@@ -338,7 +372,37 @@ function renderAll(config) {
     renderQuote(config.quotes);
     renderBackground(config);
     renderSections(config);
+    updatePageLayout(config.layout);
+    applyVisibility(config.visibility);
     updateGridColumns(config.layout);
+}
+
+function applyVisibility(visibility) {
+    const normalized = {
+        search: visibility?.search !== false,
+        quotes: visibility?.quotes !== false,
+        links: visibility?.links !== false
+    };
+    const searchForm = document.getElementById("search-form");
+    const quoteSection = document.querySelector(".quote");
+    const linksSection = document.getElementById("sections-container");
+    if (searchForm) {
+        searchForm.hidden = !normalized.search;
+    }
+    if (quoteSection) {
+        quoteSection.hidden = !normalized.quotes;
+    }
+    if (linksSection) {
+        linksSection.hidden = !normalized.links;
+    }
+}
+
+function updatePageLayout(layout) {
+    const isResizable = Boolean(layout?.resizable);
+    const pageWidth = isResizable ? Math.min(100, Math.max(60, Number(layout?.pageWidth) || 72)) : 72;
+    const pageWidthPx = isResizable ? 9999 : 1200;
+    document.documentElement.style.setProperty("--page-width-vw", `${pageWidth}vw`);
+    document.documentElement.style.setProperty("--page-width-px", `${pageWidthPx}px`);
 }
 
 function renderBranding(branding) {
@@ -442,6 +506,7 @@ function renderSections(config) {
     container.innerHTML = "";
 
     const sections = deriveSections(config.links, config.sections);
+    const collapsedSections = new Set(Array.isArray(config.collapsedSections) ? config.collapsedSections : []);
     lastRenderLinks = ensureLinkIds(config.links || []);
     const linksBySection = new Map();
     sections.forEach((section) => linksBySection.set(section, []));
@@ -460,6 +525,9 @@ function renderSections(config) {
         const sectionEl = document.createElement("div");
         sectionEl.className = "section";
         sectionEl.dataset.section = section;
+        const isCollapsed = collapsedSections.has(section);
+        sectionEl.dataset.collapsed = isCollapsed ? "true" : "false";
+        sectionEl.classList.toggle("is-collapsed", isCollapsed);
         sectionEl.draggable = isRearranging;
 
         const header = document.createElement("div");
@@ -467,14 +535,27 @@ function renderSections(config) {
         header.dataset.drag = "section";
         const heading = document.createElement("h2");
         heading.textContent = section;
+
+        const headerActions = document.createElement("div");
+        headerActions.className = "section-header-actions";
+        const collapse = document.createElement("button");
+        collapse.type = "button";
+        collapse.className = "section-collapse";
+        collapse.dataset.action = "toggle-section-collapse";
+        collapse.dataset.section = section;
+        collapse.textContent = isCollapsed ? "Expand" : "Collapse";
+
         const handle = document.createElement("button");
         handle.type = "button";
         handle.className = "section-handle";
         handle.dataset.drag = "section";
         handle.draggable = isRearranging;
         handle.textContent = "Drag to reorder";
+
+        headerActions.appendChild(collapse);
+        headerActions.appendChild(handle);
         header.appendChild(heading);
-        header.appendChild(handle);
+        header.appendChild(headerActions);
         sectionEl.appendChild(header);
 
         const grid = document.createElement("div");
@@ -546,13 +627,17 @@ async function resolveFavicon(link) {
     if (link.iconOverride) {
         return link.iconOverride;
     }
+    const autoFetchFavicons = activeConfig?.privacy?.autoFetchFavicons !== false;
     const url = safeParseUrl(link.url);
     if (!url) {
-        return "";
+        return autoFetchFavicons ? "" : "images/icon.png";
     }
     const host = url.hostname.toLowerCase();
     if (faviconCache[host]) {
         return faviconCache[host];
+    }
+    if (!autoFetchFavicons) {
+        return "images/icon.png";
     }
 
     const candidates = [`${url.origin}/favicon.ico`, `${url.origin}/favicon.png`];
@@ -602,6 +687,21 @@ function blobToDataUrl(blob) {
     });
 }
 
+function findReorderTarget(container, itemSelector, pointerY, draggingItem) {
+    const candidates = Array.from(container.querySelectorAll(itemSelector)).filter((item) => item !== draggingItem);
+    let closest = null;
+    let closestOffset = Number.NEGATIVE_INFINITY;
+    candidates.forEach((item) => {
+        const rect = item.getBoundingClientRect();
+        const offset = pointerY - (rect.top + rect.height / 2);
+        if (offset < 0 && offset > closestOffset) {
+            closestOffset = offset;
+            closest = item;
+        }
+    });
+    return closest;
+}
+
 function setupSettings() {
     const settingsToggle = document.getElementById("settings-toggle");
     const rearrangeToggle = document.getElementById("rearrange-toggle");
@@ -626,8 +726,16 @@ function setupSettings() {
     const importConfigMode = document.getElementById("import-config-mode");
     const resetConfig = document.getElementById("reset-config");
     const linksEditor = document.getElementById("links-editor");
+    const enginesEditor = document.getElementById("engines-editor");
     const sectionsContainer = document.getElementById("sections-container");
+    const layoutResizable = document.getElementById("layout-resizable");
     const layoutMaxColumns = document.getElementById("layout-max-columns");
+    const layoutMinCardWidth = document.getElementById("layout-min-card-width");
+    const layoutPageWidth = document.getElementById("layout-page-width");
+    const visibilitySearch = document.getElementById("visibility-search");
+    const visibilityQuotes = document.getElementById("visibility-quotes");
+    const visibilityLinks = document.getElementById("visibility-links");
+    const autoFetchFavicons = document.getElementById("privacy-auto-fetch-favicons");
     const settingsNav = document.querySelector(".settings-nav");
     const quickSectionForm = document.querySelector("[data-nav-popover]");
     const quickSectionInput = document.getElementById("quick-section-name");
@@ -642,13 +750,13 @@ function setupSettings() {
         const syncResult = await setSyncConfig(syncConfig);
         await storageLocal.set({ [LOCAL_ASSETS_KEY]: localAssets });
         if (syncResult.ok) {
-        await storageLocal.set({ [SYNC_META_KEY]: { lastSyncAt: Date.now() } });
-        refreshSyncStatus();
-        updateSyncUsage(activeConfig);
-    } else {
-        setSyncStatus(`Sync: ${syncResult.error || "error"}`, "warn");
-    }
-    renderAll(activeConfig);
+            await storageLocal.set({ [SYNC_META_KEY]: { lastSyncAt: Date.now() } });
+            refreshSyncStatus();
+            updateSyncUsage(activeConfig);
+        } else {
+            setSyncStatus(`Sync: ${syncResult.error || "error"}`, "warn");
+        }
+        renderAll(activeConfig);
         if (closePanel) {
             settingsPanel.classList.remove("open");
             settingsPanel.setAttribute("aria-hidden", "true");
@@ -661,6 +769,7 @@ function setupSettings() {
             settingsPanel.setAttribute("aria-hidden", "true");
             setRearrangeMode(false);
             updateLinkRowDragState();
+            updateEngineRowDragState();
             return;
         }
         setRearrangeMode(false);
@@ -668,6 +777,7 @@ function setupSettings() {
         settingsPanel.classList.add("open");
         settingsPanel.setAttribute("aria-hidden", "false");
         updateLinkRowDragState();
+        updateEngineRowDragState();
     });
 
     rearrangeToggle.addEventListener("click", async () => {
@@ -685,6 +795,7 @@ function setupSettings() {
             settingsPanel.setAttribute("aria-hidden", "true");
             setRearrangeMode(false);
             updateLinkRowDragState();
+            updateEngineRowDragState();
         });
     }
 
@@ -693,6 +804,7 @@ function setupSettings() {
         settingsPanel.setAttribute("aria-hidden", "true");
         setRearrangeMode(false);
         updateLinkRowDragState();
+        updateEngineRowDragState();
     });
 
     if (settingsSave) {
@@ -736,6 +848,7 @@ function setupSettings() {
         if (action === "quick-add-engine") {
             addEngineRow({ id: "", label: "", url: "", queryParam: "q" });
             refreshDefaultEngineOptions();
+            updateEngineRowDragState();
             const section = document.getElementById("settings-search");
             section?.scrollIntoView({ block: "start" });
             const lastEngine = document.querySelector("#engines-editor [data-engine-row]:last-child");
@@ -750,9 +863,11 @@ function setupSettings() {
         if (action === "remove-engine") {
             event.target.closest("[data-engine-row]")?.remove();
             refreshDefaultEngineOptions();
+            updateEngineRowDragState();
         }
         if (action === "remove-section") {
             event.target.closest("[data-section-block]")?.remove();
+            refreshLinkSectionChoices();
         }
     });
 
@@ -764,6 +879,7 @@ function setupSettings() {
                 return;
             }
             ensureLinksSection(sectionName);
+            refreshLinkSectionChoices(sectionName);
             const section = document.querySelector(`[data-section-block][data-section="${sectionName}"]`);
             section?.scrollIntoView({ block: "start" });
             quickSectionInput.value = "";
@@ -787,6 +903,7 @@ function setupSettings() {
             settingsPanel.setAttribute("aria-hidden", "true");
             setRearrangeMode(false);
             updateLinkRowDragState();
+            updateEngineRowDragState();
             return;
         }
         if (isRearranging) {
@@ -801,12 +918,14 @@ function setupSettings() {
             return;
         }
         ensureLinksSection(name);
+        refreshLinkSectionChoices(name);
         newSectionName.value = "";
     });
     addBackgroundUrl.addEventListener("click", () => addBackgroundRow(""));
     addEngine.addEventListener("click", () => {
         addEngineRow({ id: "", label: "", url: "", queryParam: "q" });
         refreshDefaultEngineOptions();
+        updateEngineRowDragState();
     });
 
         backgroundUpload.addEventListener("change", async (event) => {
@@ -920,16 +1039,53 @@ function setupSettings() {
         if (event.target.dataset.field === "icon") {
             handleIconUpload(event.target);
         }
+        if (event.target.dataset.field === "section") {
+            handleLinkSectionSelection(event.target);
+        }
+        if (event.target.dataset.field === "sectionCustom") {
+            finalizeCustomLinkSection(event.target);
+        }
         if (event.target.closest("#engines-editor")) {
             refreshDefaultEngineOptions();
         }
     });
 
-    layoutMaxColumns.addEventListener("change", () => {
+    linksEditor.addEventListener("keydown", (event) => {
+        if (event.target.dataset.field === "sectionCustom" && event.key === "Enter") {
+            event.preventDefault();
+            finalizeCustomLinkSection(event.target);
+        }
+    });
+
+    const previewLayout = () => {
         const nextLayout = collectLayout();
         activeConfig = { ...activeConfig, layout: nextLayout };
+        updateLayoutControlState(nextLayout);
+        updatePageLayout(activeConfig.layout);
         updateGridColumns(activeConfig.layout);
-    });
+    };
+
+    const previewVisibility = () => {
+        const visibility = collectVisibility();
+        activeConfig = { ...activeConfig, visibility };
+        applyVisibility(activeConfig.visibility);
+    };
+
+    const previewPrivacy = () => {
+        const privacy = collectPrivacy();
+        activeConfig = { ...activeConfig, privacy };
+        renderSections(activeConfig);
+        updateGridColumns(activeConfig.layout);
+    };
+
+    layoutResizable.addEventListener("change", previewLayout);
+    layoutMaxColumns.addEventListener("change", previewLayout);
+    layoutMinCardWidth.addEventListener("change", previewLayout);
+    layoutPageWidth.addEventListener("change", previewLayout);
+    visibilitySearch.addEventListener("change", previewVisibility);
+    visibilityQuotes.addEventListener("change", previewVisibility);
+    visibilityLinks.addEventListener("change", previewVisibility);
+    autoFetchFavicons.addEventListener("change", previewPrivacy);
 
     backgroundMode.addEventListener("change", () => {
         activeConfig = { ...activeConfig, backgroundMode: backgroundMode.value };
@@ -987,10 +1143,57 @@ function setupSettings() {
         }
         if (dragging) {
             const section = list.dataset.section;
-            const sectionInput = dragging.querySelector('[data-field="section"]');
-            if (sectionInput) {
-                sectionInput.value = section;
-            }
+            setLinkRowSectionValue(dragging, section);
+        }
+    });
+
+    enginesEditor.addEventListener("dragstart", (event) => {
+        if (!canRearrangeEditor()) {
+            return;
+        }
+        const row = event.target.closest("[data-engine-row]");
+        if (!row) {
+            return;
+        }
+        row.classList.add("dragging");
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", row.querySelector('[data-field="id"]')?.value || "");
+    });
+
+    enginesEditor.addEventListener("dragend", (event) => {
+        const row = event.target.closest("[data-engine-row]");
+        if (row) {
+            row.classList.remove("dragging");
+        }
+    });
+
+    enginesEditor.addEventListener("dragover", (event) => {
+        if (!canRearrangeEditor()) {
+            return;
+        }
+        const container = event.currentTarget;
+        const dragging = container.querySelector(".engine-row.dragging");
+        if (!dragging) {
+            return;
+        }
+        event.preventDefault();
+        const target = findReorderTarget(container, "[data-engine-row]", event.clientY, dragging);
+        if (!target) {
+            container.appendChild(dragging);
+            return;
+        }
+        container.insertBefore(dragging, target);
+    });
+
+    enginesEditor.addEventListener("drop", (event) => {
+        if (!canRearrangeEditor()) {
+            return;
+        }
+        event.preventDefault();
+        const container = event.currentTarget;
+        const dragging = container.querySelector(".engine-row.dragging");
+        if (dragging && !container.contains(dragging)) {
+            container.appendChild(dragging);
         }
     });
 
@@ -1091,6 +1294,18 @@ function setupSettings() {
         if (isRearranging && event.target.closest(".link-card")) {
             event.preventDefault();
         }
+        if (action === "toggle-section-collapse") {
+            if (!isRearranging) {
+                return;
+            }
+            event.preventDefault();
+            const sectionName = event.target.dataset.section || event.target.closest(".section")?.dataset.section;
+            if (!sectionName) {
+                return;
+            }
+            toggleSectionCollapsed(sectionName);
+            return;
+        }
         if (action === "remove-link-card") {
             event.preventDefault();
             const card = event.target.closest(".link-card");
@@ -1189,6 +1404,8 @@ function renderSettings(config) {
     renderQuotesEditor(config.quotes);
     renderSearchEditor(config.search);
     renderLayoutEditor(config.layout);
+    renderVisibilityEditor(config.visibility);
+    renderPrivacyEditor(config.privacy);
     renderBrandingEditor(config.branding);
     renderBackgroundModeEditor(config.backgroundMode);
 }
@@ -1247,14 +1464,23 @@ function renderLinksEditor(links, sectionsOverride) {
         row.dataset.iconOverride = link.iconOverride || "";
         row.querySelector('[data-field="name"]').value = link.name || "";
         row.querySelector('[data-field="url"]').value = link.url || "";
-        row.querySelector('[data-field="section"]').value = link.section || DEFAULT_LINK_SECTION;
+        const sectionName = (link.section || DEFAULT_LINK_SECTION).trim() || DEFAULT_LINK_SECTION;
+        row.dataset.sectionValue = sectionName;
         const preview = row.querySelector(".icon-preview");
         preview.src = link.iconOverride || "images/icon.png";
         row.draggable = isRearranging;
-        const sectionName = link.section || DEFAULT_LINK_SECTION;
         const list = ensureSection(sectionName);
         list.appendChild(row);
     });
+
+    refreshLinkSectionChoices();
+    container.querySelectorAll("[data-link-row]").forEach((row) => {
+        if (row.dataset.sectionValue) {
+            setLinkRowSectionValue(row, row.dataset.sectionValue);
+            delete row.dataset.sectionValue;
+        }
+    });
+
     if (!links.length) {
         addLinkRow(DEFAULT_LINK_SECTION);
     }
@@ -1270,9 +1496,9 @@ function ensureLinksSection(sectionName) {
     const container = document.getElementById("links-editor");
     const existing = container.querySelector(`[data-section-block][data-section="${sectionName}"]`);
     if (existing) {
-        return;
+        return existing.querySelector("[data-section-list]");
     }
-    createLinksSection(sectionName, container);
+    return createLinksSection(sectionName, container);
 }
 
 function createLinksSection(sectionName, container) {
@@ -1301,6 +1527,123 @@ function createLinksSection(sectionName, container) {
     return list;
 }
 
+function refreshLinkSectionChoices() {
+    const sectionNames = collectSectionsFromEditor();
+    if (!sectionNames.length) {
+        ensureLinksSection(DEFAULT_LINK_SECTION);
+        sectionNames.push(DEFAULT_LINK_SECTION);
+    }
+
+    document.querySelectorAll("[data-link-row]").forEach((row) => {
+        const select = row.querySelector('[data-field="section"]');
+        const customInput = row.querySelector('[data-field="sectionCustom"]');
+        if (!select) {
+            return;
+        }
+        const currentValue = getLinkRowSectionValue(row) || row.dataset.sectionValue || DEFAULT_LINK_SECTION;
+        select.innerHTML = "";
+        sectionNames.forEach((name) => {
+            const option = document.createElement("option");
+            option.value = name;
+            option.textContent = name;
+            select.appendChild(option);
+        });
+        const newOption = document.createElement("option");
+        newOption.value = NEW_SECTION_OPTION;
+        newOption.textContent = "New...";
+        select.appendChild(newOption);
+
+        if (sectionNames.includes(currentValue)) {
+            select.value = currentValue;
+            if (customInput) {
+                customInput.value = "";
+                customInput.hidden = true;
+            }
+            return;
+        }
+
+        select.value = NEW_SECTION_OPTION;
+        if (customInput) {
+            customInput.value = currentValue;
+            customInput.hidden = false;
+        }
+    });
+}
+
+function getLinkRowSectionValue(row) {
+    const select = row.querySelector('[data-field="section"]');
+    const customInput = row.querySelector('[data-field="sectionCustom"]');
+    if (!select) {
+        return DEFAULT_LINK_SECTION;
+    }
+    if (select.value === NEW_SECTION_OPTION) {
+        return customInput?.value.trim() || "";
+    }
+    return select.value.trim();
+}
+
+function setLinkRowSectionValue(row, sectionName) {
+    const resolvedSection = (sectionName || "").trim() || DEFAULT_LINK_SECTION;
+    const select = row.querySelector('[data-field="section"]');
+    const customInput = row.querySelector('[data-field="sectionCustom"]');
+    if (!select) {
+        return;
+    }
+    const options = Array.from(select.options).map((option) => option.value);
+    if (options.includes(resolvedSection)) {
+        select.value = resolvedSection;
+        if (customInput) {
+            customInput.value = "";
+            customInput.hidden = true;
+        }
+        return;
+    }
+    select.value = NEW_SECTION_OPTION;
+    if (customInput) {
+        customInput.value = resolvedSection;
+        customInput.hidden = false;
+    }
+}
+
+function moveLinkRowToSection(row, sectionName) {
+    const resolvedSection = (sectionName || "").trim() || DEFAULT_LINK_SECTION;
+    ensureLinksSection(resolvedSection);
+    refreshLinkSectionChoices();
+    const targetList = document.querySelector(`[data-section-list][data-section="${resolvedSection}"]`);
+    if (targetList && row.parentElement !== targetList) {
+        targetList.appendChild(row);
+    }
+    setLinkRowSectionValue(row, resolvedSection);
+}
+
+function handleLinkSectionSelection(selectInput) {
+    const row = selectInput.closest("[data-link-row]");
+    if (!row) {
+        return;
+    }
+    if (selectInput.value === NEW_SECTION_OPTION) {
+        const customInput = row.querySelector('[data-field="sectionCustom"]');
+        if (customInput) {
+            customInput.hidden = false;
+            customInput.focus();
+        }
+        return;
+    }
+    moveLinkRowToSection(row, selectInput.value);
+}
+
+function finalizeCustomLinkSection(customInput) {
+    const row = customInput.closest("[data-link-row]");
+    if (!row) {
+        return;
+    }
+    const nextSection = customInput.value.trim();
+    if (!nextSection) {
+        return;
+    }
+    moveLinkRowToSection(row, nextSection);
+}
+
 function renderBackgroundsEditor(backgrounds) {
     const container = document.getElementById("backgrounds-editor");
     const template = document.getElementById("background-row-template");
@@ -1327,6 +1670,7 @@ function renderSearchEditor(search) {
         addEngineRow({ id: "google", label: "Google", url: "https://www.google.com/search", queryParam: "q" }, container, template);
     }
     refreshDefaultEngineOptions(search.defaultEngine);
+    updateEngineRowDragState();
 }
 
 function renderBackgroundModeEditor(mode) {
@@ -1351,9 +1695,44 @@ function renderBrandingEditor(branding) {
     }
 }
 function renderLayoutEditor(layout) {
-    const input = document.getElementById("layout-max-columns");
-    const value = Number.isFinite(layout?.maxColumns) ? layout.maxColumns : 4;
-    input.value = value;
+    const resizableInput = document.getElementById("layout-resizable");
+    const maxColumnsInput = document.getElementById("layout-max-columns");
+    const minCardWidthInput = document.getElementById("layout-min-card-width");
+    const pageWidthInput = document.getElementById("layout-page-width");
+    const isResizable = Boolean(layout?.resizable);
+    const defaults = { maxColumns: 4, minCardWidth: 180, pageWidth: 72 };
+    resizableInput.checked = isResizable;
+    const maxColumns = isResizable && Number.isFinite(layout?.maxColumns) ? layout.maxColumns : defaults.maxColumns;
+    const minCardWidth = isResizable && Number.isFinite(layout?.minCardWidth) ? layout.minCardWidth : defaults.minCardWidth;
+    const pageWidth = isResizable && Number.isFinite(layout?.pageWidth) ? layout.pageWidth : defaults.pageWidth;
+    maxColumnsInput.value = maxColumns;
+    minCardWidthInput.value = minCardWidth;
+    pageWidthInput.value = pageWidth;
+    updateLayoutControlState({ resizable: isResizable });
+}
+
+function updateLayoutControlState(layout) {
+    const isResizable = Boolean(layout?.resizable);
+    const maxColumnsInput = document.getElementById("layout-max-columns");
+    const minCardWidthInput = document.getElementById("layout-min-card-width");
+    const pageWidthInput = document.getElementById("layout-page-width");
+    maxColumnsInput.disabled = !isResizable;
+    minCardWidthInput.disabled = !isResizable;
+    pageWidthInput.disabled = !isResizable;
+}
+
+function renderVisibilityEditor(visibility) {
+    const searchInput = document.getElementById("visibility-search");
+    const quotesInput = document.getElementById("visibility-quotes");
+    const linksInput = document.getElementById("visibility-links");
+    searchInput.checked = visibility?.search !== false;
+    quotesInput.checked = visibility?.quotes !== false;
+    linksInput.checked = visibility?.links !== false;
+}
+
+function renderPrivacyEditor(privacy) {
+    const autoFetchFavicons = document.getElementById("privacy-auto-fetch-favicons");
+    autoFetchFavicons.checked = privacy?.autoFetchFavicons !== false;
 }
 
 function addLinkRow(sectionName) {
@@ -1368,14 +1747,15 @@ function addLinkRow(sectionName) {
     row.dataset.linkId = createId();
     row.dataset.iconOverride = "";
     row.querySelector(".icon-preview").src = "images/icon.png";
-    row.querySelector('[data-field="section"]').value = resolvedSection;
     row.draggable = isRearranging || canRearrangeEditor();
     if (targetList) {
-        targetList.prepend(row);
+        targetList.appendChild(row);
         row.scrollIntoView({ block: "nearest" });
     } else {
         container.appendChild(row);
     }
+    refreshLinkSectionChoices();
+    setLinkRowSectionValue(row, resolvedSection);
     updateLinkRowDragState();
     return row;
 }
@@ -1494,6 +1874,7 @@ function addEngineRow(engine, containerOverride, templateOverride) {
     row.querySelector('[data-field="label"]').value = engine.label || "";
     row.querySelector('[data-field="url"]').value = engine.url || "";
     row.querySelector('[data-field="queryParam"]').value = engine.queryParam || "q";
+    row.draggable = canRearrangeEditor();
     container.appendChild(row);
 }
 
@@ -1526,15 +1907,21 @@ function collectConfigFromEditors() {
     const quotes = collectQuotes();
     const search = collectSearch();
     const layout = collectLayout();
+    const visibility = collectVisibility();
+    const privacy = collectPrivacy();
     const backgroundMode = collectBackgroundMode();
+    const nextSections = deriveSections(links, sections);
     return {
         branding,
-        sections: sections.length ? sections : deriveSections(links, []),
+        sections: nextSections.length ? nextSections : [DEFAULT_LINK_SECTION],
         links,
         quotes,
         backgrounds,
         backgroundMode,
         layout,
+        visibility,
+        privacy,
+        collapsedSections: collectCollapsedSectionsFromMain(),
         search
     };
 }
@@ -1546,7 +1933,7 @@ function collectLinks() {
         const id = row.dataset.linkId || createId();
         const name = row.querySelector('[data-field="name"]').value.trim();
         const url = row.querySelector('[data-field="url"]').value.trim();
-        const section = row.querySelector('[data-field="section"]').value.trim();
+        const section = getLinkRowSectionValue(row);
         const iconOverride = row.dataset.iconOverride || "";
         if (!name && !url) {
             return;
@@ -1580,6 +1967,7 @@ function setRearrangeMode(enabled) {
         renderAll(activeConfig);
     }
     updateLinkRowDragState();
+    updateEngineRowDragState();
     updateMainDragState();
     if (!enabled) {
         renderAll(activeConfig);
@@ -1590,6 +1978,17 @@ function updateLinkRowDragState() {
     const allowDrag = isRearranging || canRearrangeEditor();
     document.querySelectorAll("[data-link-row]").forEach((row) => {
         row.draggable = allowDrag;
+    });
+}
+
+function updateEngineRowDragState() {
+    const allowDrag = canRearrangeEditor();
+    document.querySelectorAll("[data-engine-row]").forEach((row) => {
+        row.draggable = allowDrag;
+        const handle = row.querySelector(".engine-row-handle");
+        if (handle) {
+            handle.setAttribute("aria-disabled", allowDrag ? "false" : "true");
+        }
     });
 }
 
@@ -1606,8 +2005,9 @@ function updateMainDragState() {
 }
 
 function updateGridColumns(layout) {
-    const maxColumns = Math.min(4, Math.max(1, layout?.maxColumns || 4));
-    const minCardWidth = Math.max(160, layout?.minCardWidth || 180);
+    const isResizable = Boolean(layout?.resizable);
+    const maxColumns = isResizable ? Math.min(10, Math.max(1, layout?.maxColumns || 4)) : 4;
+    const minCardWidth = isResizable ? Math.max(120, layout?.minCardWidth || 180) : 180;
     document.querySelectorAll(".links-grid").forEach((grid) => {
         const width = grid.clientWidth || 0;
         const computed = width ? Math.max(1, Math.floor(width / minCardWidth)) : maxColumns;
@@ -1634,11 +2034,19 @@ function setupGridObserver() {
 
 async function persistActiveConfig() {
     const nextLinks = collectLinksFromMain();
+    const nextSections = collectSectionsFromMain();
+    const nextCollapsedSections = collectCollapsedSectionsFromMain();
     if (nextLinks.length) {
         activeConfig = {
             ...activeConfig,
             links: nextLinks,
-            sections: collectSectionsFromMain()
+            sections: nextSections,
+            collapsedSections: nextCollapsedSections
+        };
+    } else {
+        activeConfig = {
+            ...activeConfig,
+            collapsedSections: nextCollapsedSections
         };
     }
     const { syncConfig, localAssets } = splitConfig(activeConfig);
@@ -1650,6 +2058,26 @@ async function persistActiveConfig() {
     } else {
         setSyncStatus(`Sync: ${syncResult.error || "error"}`, "warn");
     }
+}
+
+async function toggleSectionCollapsed(sectionName) {
+    if (!sectionName) {
+        return;
+    }
+    const collapsed = new Set(Array.isArray(activeConfig?.collapsedSections) ? activeConfig.collapsedSections : []);
+    if (collapsed.has(sectionName)) {
+        collapsed.delete(sectionName);
+    } else {
+        collapsed.add(sectionName);
+    }
+    activeConfig = {
+        ...activeConfig,
+        collapsedSections: Array.from(collapsed)
+    };
+    renderSections(activeConfig);
+    applyVisibility(activeConfig.visibility);
+    updateGridColumns(activeConfig.layout);
+    await persistActiveConfig();
 }
 
 function collectLinksFromMain() {
@@ -1669,6 +2097,12 @@ function collectLinksFromMain() {
 
 function collectSectionsFromMain() {
     return Array.from(document.querySelectorAll(".section"))
+        .map((section) => section.dataset.section || "")
+        .filter((name) => name.length > 0);
+}
+
+function collectCollapsedSectionsFromMain() {
+    return Array.from(document.querySelectorAll(".section.is-collapsed"))
         .map((section) => section.dataset.section || "")
         .filter((name) => name.length > 0);
 }
@@ -1712,12 +2146,40 @@ function collectSearch() {
 }
 
 function collectLayout() {
+    const resizableInput = document.getElementById("layout-resizable");
     const input = document.getElementById("layout-max-columns");
-    const maxColumns = Math.min(4, Math.max(2, parseInt(input.value, 10) || 4));
+    const minCardWidthInput = document.getElementById("layout-min-card-width");
+    const pageWidthInput = document.getElementById("layout-page-width");
+    const resizable = resizableInput?.checked === true;
+    if (!resizable) {
+        return {
+            resizable: false,
+            maxColumns: 4,
+            minCardWidth: 180,
+            pageWidth: 72
+        };
+    }
+    const maxColumns = Math.min(10, Math.max(2, parseInt(input.value, 10) || 4));
+    const minCardWidth = Math.min(520, Math.max(120, parseInt(minCardWidthInput.value, 10) || 180));
+    const pageWidth = Math.min(100, Math.max(60, parseInt(pageWidthInput.value, 10) || 72));
     return {
+        resizable,
         maxColumns,
-        minCardWidth: activeConfig?.layout?.minCardWidth || 180
+        minCardWidth,
+        pageWidth
     };
+}
+
+function collectVisibility() {
+    const search = document.getElementById("visibility-search")?.checked !== false;
+    const quotes = document.getElementById("visibility-quotes")?.checked !== false;
+    const links = document.getElementById("visibility-links")?.checked !== false;
+    return { search, quotes, links };
+}
+
+function collectPrivacy() {
+    const autoFetchFavicons = document.getElementById("privacy-auto-fetch-favicons")?.checked !== false;
+    return { autoFetchFavicons };
 }
 
 function collectBackgroundMode() {

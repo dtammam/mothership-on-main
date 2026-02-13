@@ -26,7 +26,7 @@ jobs:
       - name: Build standardized release body
         id: release_meta
         shell: pwsh
-        run: ./scripts/build-release-body.ps1 -OutputDir dist/edge-packages -ProgressEntries 5
+        run: ./scripts/build-release-body.ps1 -OutputDir dist/edge-packages -ProgressEntries 1
 
       - name: Upload package artifacts
         uses: actions/upload-artifact@v4
@@ -48,7 +48,6 @@ jobs:
           body_path: ${{ steps.release_meta.outputs.release_body_path }}
           files: |
             dist/edge-packages/*.zip
-            dist/edge-packages/*.sha256
             dist/edge-packages/checksums.txt
             dist/edge-packages/release-body.md
 
@@ -61,6 +60,5 @@ jobs:
           body_path: ${{ steps.release_meta.outputs.release_body_path }}
           files: |
             dist/edge-packages/*.zip
-            dist/edge-packages/*.sha256
             dist/edge-packages/checksums.txt
             dist/edge-packages/release-body.md

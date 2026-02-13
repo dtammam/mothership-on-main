@@ -58,10 +58,10 @@
                 <nav class="settings-nav" aria-label="Customize shortcuts">
                     <a href="#settings-config">Config</a>
                     <a href="#settings-branding">Branding</a>
+                    <a href="#settings-layout">Layout</a>
                     <a href="#settings-search">Search</a>
                     <a href="#settings-quotes">Quotes</a>
                     <a href="#settings-backgrounds">Backgrounds</a>
-                    <a href="#settings-layout">Layout</a>
                     <a href="#settings-links">Links</a>
                     <span class="settings-nav-actions">
                         <button type="button" data-action="quick-add-link">New Link</button>
@@ -108,6 +108,48 @@
                     <label class="field branding-field branding-field-wide">
                         Subheader
                         <input id="branding-subtitle" type="text" placeholder="Your favorite bookmark replacement tool">
+                    </label>
+                </div>
+            </div>
+
+            <div id="settings-layout" class="settings-section">
+                <h3>Layout</h3>
+                <div class="row">
+                    <label class="toggle-field">
+                        <input id="layout-resizable" type="checkbox">
+                        Enable custom layout sizing
+                    </label>
+                </div>
+                <div class="row">
+                    <label class="field">
+                        Max columns
+                        <input id="layout-max-columns" type="number" min="2" max="10" step="1">
+                    </label>
+                    <label class="field">
+                        Min card width
+                        <input id="layout-min-card-width" type="number" min="120" max="520" step="10">
+                    </label>
+                    <label class="field">
+                        Page width (%)
+                        <input id="layout-page-width" type="number" min="60" max="100" step="1">
+                    </label>
+                </div>
+                <div class="row">
+                    <label class="toggle-field">
+                        <input id="visibility-search" type="checkbox">
+                        Show search bar
+                    </label>
+                    <label class="toggle-field">
+                        <input id="visibility-quotes" type="checkbox">
+                        Show quotes
+                    </label>
+                    <label class="toggle-field">
+                        <input id="visibility-links" type="checkbox">
+                        Show link sections
+                    </label>
+                    <label class="toggle-field">
+                        <input id="privacy-auto-fetch-favicons" type="checkbox">
+                        Auto-fetch link icons
                     </label>
                 </div>
             </div>
@@ -168,16 +210,6 @@
                 </div>
             </div>
 
-            <div id="settings-layout" class="settings-section">
-                <h3>Layout</h3>
-                <div class="row">
-                    <label class="field">
-                        Max columns
-                        <input id="layout-max-columns" type="number" min="2" max="4" step="1">
-                    </label>
-                </div>
-            </div>
-
             <div id="settings-links" class="settings-section">
                 <h3>Links</h3>
                 <div id="links-editor" class="editor-list links-editor"></div>
@@ -227,7 +259,8 @@
                 </label>
                 <label class="field field-section">
                     Section
-                    <input data-field="section" type="text" placeholder="Links">
+                    <select data-field="section"></select>
+                    <input data-field="sectionCustom" class="section-custom-input" type="text" placeholder="New section name" hidden>
                 </label>
                 <label class="field field-icon">
                     Icon override
@@ -250,6 +283,7 @@
 
         <template id="engine-row-template">
             <div class="editor-row engine-row" data-engine-row>
+                <button class="engine-row-handle" type="button" aria-label="Drag search provider">Drag</button>
                 <label class="field field-id">
                     Id
                     <input data-field="id" type="text" placeholder="google">

@@ -19,9 +19,20 @@
   "backgroundMode": "gradient_signature",
   "backgrounds": [],
   "layout": {
+    "resizable": false,
     "maxColumns": 4,
-    "minCardWidth": 180
+    "minCardWidth": 180,
+    "pageWidth": 72
   },
+  "visibility": {
+    "search": true,
+    "quotes": true,
+    "links": true
+  },
+  "privacy": {
+    "autoFetchFavicons": true
+  },
+  "collapsedSections": [],
   "search": {
     "defaultEngine": "google",
     "engines": [

@@ -1,6 +1,6 @@
 param(
     [string]$OutputDir = "dist/edge-packages",
-    [int]$ProgressEntries = 5
+    [int]$ProgressEntries = 1
 )
 
 Set-StrictMode -Version Latest
@@ -21,6 +21,9 @@ if (-not (Test-Path -LiteralPath $checksumsPath)) {
 if (-not (Test-Path -LiteralPath $progressPath)) {
     throw "PROGRESS.md not found at repository root."
 }
+if ($ProgressEntries -lt 1) {
+    throw "ProgressEntries must be at least 1."
+}
 
 $manifest = Get-Content -Path $manifestPath -Raw | ConvertFrom-Json
 $version = [string]$manifest.version
@@ -35,7 +38,7 @@ $progressLines = Get-Content -Path $progressPath |
 $recentProgress = @()
 if ($progressLines.Count -gt 0) {
     $take = [Math]::Min($ProgressEntries, $progressLines.Count)
-    $recentProgress = $progressLines | Select-Object -Last $take
+    $recentProgress = @($progressLines | Select-Object -Last $take)
 }
 
 $sha = [string]$env:GITHUB_SHA
@@ -46,7 +49,7 @@ if ([string]::IsNullOrWhiteSpace($runNumber)) {
 }
 
 $bodyLines = @(
-    "# Edge extension build metadata",
+    "# Mothership on Main build metadata",
     "",
     "- Manifest version: v$version",
     "- Commit: $shortSha",
@@ -62,7 +65,7 @@ $bodyLines += $shaLines
 $bodyLines += @(
     '```',
     "",
-    "## Recent progress",
+    "## Release notes",
     ""
 )
 
