@@ -3,6 +3,10 @@
 ## Purpose
 You are working in a production Microsoft Edge (Chromium) extension. The goal of this branch is to fix config saving failures caused by `chrome.storage.sync` limits (notably `QUOTA_BYTES_PER_ITEM`), by storing the config as multiple smaller chunks while preserving backwards compatibility.
 
+## Branch workflow (required)
+- Do not merge directly into `main`.
+- For each scoped change, create a dedicated branch (for example `feature/...`, `bugfix/...`, `infra/...`), implement there, and merge via PR after review.
+
 Key constraints:
 - Keep the stack: **HTML + CSS + JavaScript only** (no build tooling introduced in this branch).
 - Avoid breaking existing users’ configs.

@@ -1,0 +1,59 @@
+name: Edge Extension Packages
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-packages:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build QA and prod extension packages
+        shell: pwsh
+        run: ./scripts/package-edge.ps1 -OutputDir dist/edge-packages
+
+      - name: Upload package artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: edge-extension-packages-${{ github.sha }}
+          path: dist/edge-packages/*
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Publish merge release assets (main)
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: main-${{ github.sha }}
+          name: Main build ${{ github.sha }}
+          target_commitish: ${{ github.sha }}
+          prerelease: true
+          generate_release_notes: false
+          body: |
+            Automated merge build from `main`.
+            Includes QA/prod Edge extension zips and SHA-256 checksum files.
+          files: |
+            dist/edge-packages/*.zip
+            dist/edge-packages/*.sha256
+            dist/edge-packages/checksums.txt
+
+      - name: Publish release assets for version tags
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            dist/edge-packages/*.zip
+            dist/edge-packages/*.sha256
+            dist/edge-packages/checksums.txt
