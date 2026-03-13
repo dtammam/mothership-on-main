@@ -51,7 +51,7 @@ These apply to every change. They are not aspirational — they are the standard
 
 ### Storage
 
-- All `chrome.storage.sync` operations go through the v2 chunked storage module (`js/script.js` storage functions).
+- All `chrome.storage.sync` operations go through the v2 chunked storage module (`js/storage.js`).
 - Always preflight quota before writing.
 - Two-phase writes (temp → final) for corruption safety.
 - Legacy key detection and migration must remain intact.

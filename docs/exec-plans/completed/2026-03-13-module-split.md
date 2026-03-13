@@ -1,7 +1,7 @@
 # Execution Plan: Module Split (Tech Debt #1)
 
 **Created:** 2026-03-13
-**Status:** Not started
+**Status:** Complete
 
 ## Goal
 
@@ -161,15 +161,15 @@ Update `tests/helpers/load-script.js` to load all module files in order (concate
 
 ## Acceptance criteria
 
-- [ ] `js/script.js` no longer exists (deleted, not empty).
-- [ ] 7 module files exist: `constants.js`, `utils.js`, `storage.js`, `config.js`, `render.js`, `customize.js`, `init.js`.
-- [ ] `index.html` loads all 7 files in correct dependency order.
-- [ ] All 192+ tests pass via `npm test`.
-- [ ] `npm run lint` passes.
-- [ ] Extension loads and functions identically in Edge/Chrome (manual verification).
-- [ ] QUALITY_SCORE.md updated.
-- [ ] Tech debt #1 closed in tracker.
-- [ ] No user-facing behavior changes.
+- [x] `js/script.js` no longer exists (deleted, not empty).
+- [x] 7 module files exist: `constants.js`, `utils.js`, `storage.js`, `config.js`, `render.js`, `customize.js`, `init.js`.
+- [x] `index.html` loads all 7 files in correct dependency order.
+- [x] All 192+ tests pass via `npm test`.
+- [x] `npm run lint` passes.
+- [x] Extension loads and functions identically in Edge/Chrome (manual verification).
+- [x] QUALITY_SCORE.md updated.
+- [x] Tech debt #1 closed in tracker.
+- [x] No user-facing behavior changes.
 
 ## Test plan
 
@@ -190,6 +190,15 @@ Update `tests/helpers/load-script.js` to load all module files in order (concate
 (append-only, dated)
 
 - 2026-03-13: Plan created.
+- 2026-03-13: Phase 1 complete — extracted constants.js (43 lines, all storage keys + fallbackConfig).
+- 2026-03-13: Phase 2 complete — extracted utils.js (16 pure utility functions, 138 lines).
+- 2026-03-13: Phase 3 complete — extracted storage.js (24 functions, 524 lines).
+- 2026-03-13: Phase 4 complete — extracted config.js (20 functions, 389 lines).
+- 2026-03-13: Phase 5 complete — extracted render.js (25 functions, 512 lines).
+- 2026-03-13: Phase 6 complete — extracted customize.js (38 functions, 1319 lines).
+- 2026-03-13: Phase 7 complete — created init.js (58 lines), deleted script.js.
+- 2026-03-13: Phase 8 complete — test infrastructure verified (192 tests pass with 7-module concatenation).
+- 2026-03-13: Phase 9 complete — graded Search (C), Customize panel (D), Drag & reorder (D). Config management upgraded B→A. Tech debt #1 closed.
 
 ## Decision log
 

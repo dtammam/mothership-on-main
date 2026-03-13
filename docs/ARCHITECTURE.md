@@ -16,7 +16,7 @@ This is a Manifest V3 Chrome extension with a single surface:
 
 Primary flows:
 
-1. **Page load:** `index.html` loads → `js/script.js` executes → config read from `chrome.storage.sync` → UI renders with user data.
+1. **Page load:** `index.html` loads → JS modules execute in dependency order → config read from `chrome.storage.sync` → UI renders with user data.
 2. **Config update:** User edits settings in Customize → config saved via v2 chunked storage → UI re-renders.
 3. **First run / migration:** If no v2 config exists, checks for legacy single-key config → auto-migrates to v2 chunked format.
 
@@ -30,7 +30,13 @@ mothership-on-main/
 ├── css/
 │   └── style.css           # All styles
 ├── js/
-│   └── script.js           # All application logic
+│   ├── constants.js        # Storage keys, limits, defaults, fallbackConfig
+│   ├── utils.js            # Pure utility functions (hashing, chunking, IDs, etc.)
+│   ├── storage.js          # chrome.storage operations, v2 chunked format, sync sim
+│   ├── config.js           # Config manipulation: merge, split, collect, normalize
+│   ├── render.js           # Main-page rendering: sections, quotes, backgrounds, gradients
+│   ├── customize.js        # Settings panel: editors, drag/reorder, import/export
+│   └── init.js             # Entry point: global state, init(), DOMContentLoaded
 ├── images/
 │   ├── icon.png            # Extension icon
 │   ├── icon.ico            # Favicon
