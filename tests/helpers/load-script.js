@@ -5,6 +5,7 @@ import { readFileSync } from "fs";
 import { resolve } from "path";
 import vm from "vm";
 import { createChromeStorageMock } from "./chrome-storage-mock.js";
+import { createDocumentMock } from "./dom-mock.js";
 
 const scriptPath = resolve(import.meta.dirname, "../../js/script.js");
 const scriptSource = readFileSync(scriptPath, "utf-8");
@@ -35,22 +36,24 @@ export function loadScript(options = {}) {
         }
     };
 
-    // Minimal document mock (enough to prevent script.js from crashing)
-    const documentMock = {
-        addEventListener() {},
-        getElementById() {
-            return null;
-        },
-        querySelector() {
-            return null;
-        },
-        querySelectorAll() {
-            return [];
-        },
-        createElement(tag) {
-            return { tagName: tag, style: {}, addEventListener() {} };
-        }
-    };
+    // Use enhanced DOM mock when requested, otherwise use minimal mock
+    const documentMock = options.useDomMock
+        ? createDocumentMock()
+        : {
+              addEventListener() {},
+              getElementById() {
+                  return null;
+              },
+              querySelector() {
+                  return null;
+              },
+              querySelectorAll() {
+                  return [];
+              },
+              createElement(tag) {
+                  return { tagName: tag, style: {}, addEventListener() {} };
+              }
+          };
 
     const sandbox = {
         window: {},
@@ -100,11 +103,15 @@ export function loadScript(options = {}) {
         msomStorage: sandbox.window.msomStorage,
         mothershipDebug: sandbox.window.mothershipDebug,
         globals: sandbox,
+        document: documentMock,
         storageMock,
         localStorage: localStorageMock,
         reset() {
             storageMock.reset();
             localStorageData.clear();
+            if (documentMock._clearRegistry) {
+                documentMock._clearRegistry();
+            }
         }
     };
 }

@@ -109,10 +109,12 @@ pwsh scripts/package-edge.ps1
 
 Active plans currently in progress:
 
-- `2026-03-13-test-coverage-expansion.md` — expand automated test coverage across all domains
+- `2026-03-13-module-split.md` — split monolithic script.js into focused modules (tech debt #1)
 
 Completed plans:
 
+- `2026-03-13-dom-test-coverage.md` — DOM rendering tests, all C domains upgraded to A
+- `2026-03-13-test-coverage-expansion.md` — expand automated test coverage across all domains
 - `2026-03-13-testing-and-linting-infrastructure.md` — establish test runner, linter, and formatter
 
 Append to the progress log (dated, append-only) when making meaningful advances on a plan.
