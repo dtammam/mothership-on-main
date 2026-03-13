@@ -61,6 +61,23 @@ export default [
         V2_TMP_META_KEY: "readonly",
         V2_TMP_CHUNK_PREFIX: "readonly",
         fallbackConfig: "readonly",
+        // utils.js
+        hashString: "readonly",
+        padChunkIndex: "readonly",
+        chunkStringBySize: "readonly",
+        buildV2ChunkKeys: "readonly",
+        calculatePayloadBytes: "readonly",
+        isDataUrl: "readonly",
+        ensureLinkIds: "readonly",
+        createId: "readonly",
+        timeAgo: "readonly",
+        rand: "readonly",
+        shuffleArray: "readonly",
+        boostColor: "readonly",
+        safeParseUrl: "readonly",
+        blobToDataUrl: "readonly",
+        fileToDataUrl: "readonly",
+        createImageThumbnail: "readonly",
       },
     },
     rules: {
@@ -81,7 +98,7 @@ export default [
   },
   {
     // constants.js declares globals consumed by other js/*.js files
-    files: ["js/constants.js"],
+    files: ["js/constants.js", "js/utils.js"],
     rules: {
       "no-unused-vars": "off",
       "no-redeclare": "off",
