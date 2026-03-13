@@ -166,7 +166,7 @@ Update `tests/helpers/load-script.js` to load all module files in order (concate
 - [x] `index.html` loads all 7 files in correct dependency order.
 - [x] All 192+ tests pass via `npm test`.
 - [x] `npm run lint` passes.
-- [ ] Extension loads and functions identically in Edge/Chrome (manual verification).
+- [x] Extension loads and functions identically in Edge/Chrome (manual verification).
 - [x] QUALITY_SCORE.md updated.
 - [x] Tech debt #1 closed in tracker.
 - [x] No user-facing behavior changes.
