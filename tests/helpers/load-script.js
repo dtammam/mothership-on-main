@@ -7,8 +7,10 @@ import vm from "vm";
 import { createChromeStorageMock } from "./chrome-storage-mock.js";
 import { createDocumentMock } from "./dom-mock.js";
 
-const scriptPath = resolve(import.meta.dirname, "../../js/script.js");
-const scriptSource = readFileSync(scriptPath, "utf-8");
+// Load module files in dependency order (concatenated for VM sandbox)
+const jsDir = resolve(import.meta.dirname, "../../js");
+const moduleFiles = ["constants.js", "script.js"];
+const scriptSource = moduleFiles.map((f) => readFileSync(resolve(jsDir, f), "utf-8")).join("\n");
 
 export function loadScript(options = {}) {
     const storageMock = createChromeStorageMock();

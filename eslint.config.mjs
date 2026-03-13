@@ -36,6 +36,31 @@ export default [
         navigator: "readonly",
         // Chrome extension API
         chrome: "readonly",
+        // Cross-file globals (js/*.js loaded via <script> tags in dependency order)
+        // constants.js
+        SYNC_KEY: "readonly",
+        SYNC_CORE_KEY: "readonly",
+        SYNC_INDEX_KEY: "readonly",
+        SYNC_LINKS_PREFIX: "readonly",
+        SYNC_QUOTES_PREFIX: "readonly",
+        SYNC_BACKGROUNDS_PREFIX: "readonly",
+        SYNC_TEST_KEY: "readonly",
+        LOCAL_ASSETS_KEY: "readonly",
+        LEGACY_KEY: "readonly",
+        SYNC_META_KEY: "readonly",
+        FAVICON_CACHE_KEY: "readonly",
+        BACKGROUND_THUMBS_KEY: "readonly",
+        DEFAULT_LINK_SECTION: "readonly",
+        NEW_SECTION_OPTION: "readonly",
+        SYNC_CHUNK_CHAR_TARGET: "readonly",
+        SYNC_TOTAL_QUOTA_BYTES: "readonly",
+        SYNC_PER_ITEM_LIMIT: "readonly",
+        SYNC_VERSION: "readonly",
+        V2_META_KEY: "readonly",
+        V2_CHUNK_PREFIX: "readonly",
+        V2_TMP_META_KEY: "readonly",
+        V2_TMP_CHUNK_PREFIX: "readonly",
+        fallbackConfig: "readonly",
       },
     },
     rules: {
@@ -52,6 +77,14 @@ export default [
           caughtErrorsIgnorePattern: "^_",
         },
       ],
+    },
+  },
+  {
+    // constants.js declares globals consumed by other js/*.js files
+    files: ["js/constants.js"],
+    rules: {
+      "no-unused-vars": "off",
+      "no-redeclare": "off",
     },
   },
   {
