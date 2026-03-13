@@ -27,7 +27,21 @@ for f in js/*.js tests/*.js; do
   fi
 done
 
-# Placeholder: full test suite will go here once test runner is implemented
-# See exec plan: 2026-03-13-testing-and-linting-infrastructure.md
+# Full quality gate (requires node_modules)
+if [ -d "node_modules" ]; then
+  echo "Running lint..."
+  npx eslint js/ tests/ --no-error-on-unmatched-pattern
+  echo "  ✓ lint passed"
+
+  echo "Checking formatting..."
+  npx prettier --check "**/*.{js,json,md,yml,yaml,css,html}"
+  echo "  ✓ format check passed"
+
+  echo "Running tests..."
+  npx vitest run
+  echo "  ✓ tests passed"
+else
+  echo "  ⚠ node_modules not found — skipping lint, format, and tests (run npm install)"
+fi
 
 echo "=== pre-push passed ==="

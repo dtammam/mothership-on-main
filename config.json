@@ -1,46 +1,56 @@
 {
-  "branding": {
-    "title": "Mothership on Main",
-    "subtitle": "Your favorite bookmark replacement tool",
-    "quotesTitle": "Quotes"
-  },
-  "sections": ["Links"],
-  "links": [
-    { "section": "Links", "name": "Google", "url": "https://www.google.com/", "iconOverride": "" },
-    { "section": "Links", "name": "YouTube", "url": "https://www.youtube.com/", "iconOverride": "" },
-    { "section": "Links", "name": "Wikipedia", "url": "https://en.wikipedia.org/", "iconOverride": "" },
-    { "section": "Links", "name": "Amazon", "url": "https://www.amazon.com/", "iconOverride": "" }
-  ],
-  "quotes": [
-    "Technology is incredible!",
-    "Absolute statements can be restrictive.",
-    "Being grateful is typically a positive."
-  ],
-  "backgroundMode": "gradient_signature",
-  "backgrounds": [],
-  "layout": {
-    "resizable": false,
-    "maxColumns": 4,
-    "minCardWidth": 180,
-    "pageWidth": 72
-  },
-  "visibility": {
-    "search": true,
-    "quotes": true,
-    "links": true
-  },
-  "privacy": {
-    "autoFetchFavicons": true
-  },
-  "collapsedSections": [],
-  "search": {
-    "defaultEngine": "google",
-    "engines": [
-      { "id": "google", "label": "Google", "url": "https://www.google.com/search", "queryParam": "q" },
-      { "id": "bing", "label": "Bing", "url": "https://www.bing.com/search", "queryParam": "q" },
-      { "id": "duckduckgo", "label": "DuckDuckGo", "url": "https://duckduckgo.com/", "queryParam": "q" },
-      { "id": "microsoft", "label": "Microsoft Learn", "url": "https://learn.microsoft.com/en-us/search/", "queryParam": "terms" },
-      { "id": "wikipedia", "label": "Wikipedia", "url": "https://en.wikipedia.org/w/index.php", "queryParam": "search" }
-    ]
-  }
+    "branding": {
+        "title": "Mothership on Main",
+        "subtitle": "Your favorite bookmark replacement tool",
+        "quotesTitle": "Quotes"
+    },
+    "sections": ["Links"],
+    "links": [
+        { "section": "Links", "name": "Google", "url": "https://www.google.com/", "iconOverride": "" },
+        { "section": "Links", "name": "YouTube", "url": "https://www.youtube.com/", "iconOverride": "" },
+        { "section": "Links", "name": "Wikipedia", "url": "https://en.wikipedia.org/", "iconOverride": "" },
+        { "section": "Links", "name": "Amazon", "url": "https://www.amazon.com/", "iconOverride": "" }
+    ],
+    "quotes": [
+        "Technology is incredible!",
+        "Absolute statements can be restrictive.",
+        "Being grateful is typically a positive."
+    ],
+    "backgroundMode": "gradient_signature",
+    "backgrounds": [],
+    "layout": {
+        "resizable": false,
+        "maxColumns": 4,
+        "minCardWidth": 180,
+        "pageWidth": 72
+    },
+    "visibility": {
+        "search": true,
+        "quotes": true,
+        "links": true
+    },
+    "privacy": {
+        "autoFetchFavicons": true
+    },
+    "collapsedSections": [],
+    "search": {
+        "defaultEngine": "google",
+        "engines": [
+            { "id": "google", "label": "Google", "url": "https://www.google.com/search", "queryParam": "q" },
+            { "id": "bing", "label": "Bing", "url": "https://www.bing.com/search", "queryParam": "q" },
+            { "id": "duckduckgo", "label": "DuckDuckGo", "url": "https://duckduckgo.com/", "queryParam": "q" },
+            {
+                "id": "microsoft",
+                "label": "Microsoft Learn",
+                "url": "https://learn.microsoft.com/en-us/search/",
+                "queryParam": "terms"
+            },
+            {
+                "id": "wikipedia",
+                "label": "Wikipedia",
+                "url": "https://en.wikipedia.org/w/index.php",
+                "queryParam": "search"
+            }
+        ]
+    }
 }

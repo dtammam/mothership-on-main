@@ -8,18 +8,18 @@ Use `kickoff-complex` instead when work spans multiple domains or has non-obviou
 ## Workflow
 
 1. **Check existing context first.** Before asking the user anything:
-   - Read `docs/exec-plans/active/` — if an active plan relates to the request, surface it.
-   - Read `docs/exec-plans/tech-debt-tracker.md` — if a debt item matches, reference it.
-   - Read `docs/CONTRIBUTING.md` — confirm the design principles that apply.
-   - If the request is already covered by an existing plan, say so and skip to step 5.
+    - Read `docs/exec-plans/active/` — if an active plan relates to the request, surface it.
+    - Read `docs/exec-plans/tech-debt-tracker.md` — if a debt item matches, reference it.
+    - Read `docs/CONTRIBUTING.md` — confirm the design principles that apply.
+    - If the request is already covered by an existing plan, say so and skip to step 5.
 
 2. Ask the user to fill this template:
 
-   Goal:
-   Scope:
-   Constraints:
-   Authoritative docs:
-   Deliverables:
+    Goal:
+    Scope:
+    Constraints:
+    Authoritative docs:
+    Deliverables:
 
 3. Keep the ask short and explicit. Do not add implementation details or suggest solutions.
 

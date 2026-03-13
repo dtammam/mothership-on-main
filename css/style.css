@@ -306,7 +306,10 @@ h3 {
     border: 1px solid transparent;
     color: var(--text);
     text-decoration: none;
-    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+    transition:
+        transform 0.2s ease,
+        border-color 0.2s ease,
+        background 0.2s ease;
     position: relative;
 }
 
@@ -596,7 +599,10 @@ button:hover,
     align-items: center;
     justify-content: center;
     color: var(--muted);
-    transition: border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+    transition:
+        border-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease;
 }
 
 .footer-link:hover {
@@ -818,7 +824,9 @@ button:hover,
     border-radius: var(--radius-tight);
     border: 1px solid transparent;
     background: rgba(12, 14, 22, 0.55);
-    transition: border-color 0.2s ease, background 0.2s ease;
+    transition:
+        border-color 0.2s ease,
+        background 0.2s ease;
 }
 
 .engine-row {
@@ -827,7 +835,9 @@ button:hover,
     border-radius: var(--radius-tight);
     border: 1px solid transparent;
     background: rgba(12, 14, 22, 0.55);
-    transition: border-color 0.2s ease, background 0.2s ease;
+    transition:
+        border-color 0.2s ease,
+        background 0.2s ease;
 }
 
 .link-row-handle {

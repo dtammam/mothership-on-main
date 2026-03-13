@@ -1,0 +1,21 @@
+{
+    "name": "mothership-on-main",
+    "version": "0.0.0",
+    "private": true,
+    "description": "Dev tooling only — not shipped in the extension.",
+    "scripts": {
+        "lint": "eslint js/ tests/ --no-error-on-unmatched-pattern",
+        "lint:fix": "eslint js/ tests/ --fix --no-error-on-unmatched-pattern",
+        "format:check": "prettier --check \"**/*.{js,json,md,yml,yaml,css,html}\"",
+        "format": "prettier --write \"**/*.{js,json,md,yml,yaml,css,html}\"",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "test:coverage": "vitest run --coverage"
+    },
+    "devDependencies": {
+        "@eslint/js": "^10.0.1",
+        "eslint": "^10.0.3",
+        "prettier": "^3.8.1",
+        "vitest": "^4.1.0"
+    }
+}

@@ -43,12 +43,14 @@ If you are working on the codebase locally, you can still load it as an unpacked
 - Release descriptions are standardized and include manifest version, zip SHA-256 values, and recent `PROGRESS.md` entries.
 
 Integrity verification:
+
 - Every zip gets a SHA-256 hash in a sidecar file and in `checksums.txt`.
 - Partners can verify downloaded assets against those hashes before redistribution.
 
 ## Usage
 
 This extension does the following:
+
 - Replaces your home page and new tab page
 - Provides a config-backed multi-search window
 - Displays quotes/notes on page load (brandable heading)
@@ -79,6 +81,5 @@ See [PRIVACY](PRIVACY.md).
 ## Credits
 
 Thank you Coursera, Dr. Chuck, Dr. van Lent and JMK for teaching me enough about HTML, CSS and JavaScript to be able to even consider trying to make something like this.
-Thank you OpenAI for providing ChatGPT and thank you ChatGPT for being an amazing tutor with unlimited patience. 
+Thank you OpenAI for providing ChatGPT and thank you ChatGPT for being an amazing tutor with unlimited patience.
 Thanks JV for the feedback on my workflow and for triggering the idea.
-

@@ -31,7 +31,11 @@ const V2_TMP_META_KEY = "msom:cfg:v2:tmp:meta";
 const V2_TMP_CHUNK_PREFIX = "msom:cfg:v2:tmp:chunk:";
 
 const fallbackConfig = {
-    branding: { title: "Mothership on Main", subtitle: "Your favorite bookmark replacement tool", quotesTitle: "Quotes" },
+    branding: {
+        title: "Mothership on Main",
+        subtitle: "Your favorite bookmark replacement tool",
+        quotesTitle: "Quotes"
+    },
     sections: [DEFAULT_LINK_SECTION],
     links: [],
     quotes: [],
@@ -170,7 +174,7 @@ function getSimSyncStore() {
     };
 }
 
-function validateSimSyncSnapshot(snapshot, pendingPayload) {
+function validateSimSyncSnapshot(snapshot, _pendingPayload) {
     const keys = Object.keys(snapshot);
     const perItemError = keys.find((key) => {
         const value = snapshot[key];
@@ -239,7 +243,10 @@ async function loadConfig() {
     const defaults = await loadDefaultConfig();
     const storedLocal = await storageLocal.get(LOCAL_ASSETS_KEY);
     const existingLocalAssets = storedLocal[LOCAL_ASSETS_KEY] || {};
-    const { config: syncConfig, localAssets: nextLocalAssets } = await loadSyncConfigCore(defaults, existingLocalAssets);
+    const { config: syncConfig, localAssets: nextLocalAssets } = await loadSyncConfigCore(
+        defaults,
+        existingLocalAssets
+    );
     const merged = mergeConfig(defaults, syncConfig);
     const withAssets = applyLocalAssets(merged, nextLocalAssets || existingLocalAssets);
     updateSyncUsage(withAssets);
@@ -254,7 +261,7 @@ async function loadDefaultConfig() {
             return fallbackConfig;
         }
         return await response.json();
-    } catch (error) {
+    } catch (_error) {
         return fallbackConfig;
     }
 }
@@ -312,8 +319,12 @@ function mergeConfig(base, override) {
                 typeof override.layout?.resizable === "boolean"
                     ? override.layout.resizable
                     : Boolean(base.layout?.resizable ?? false),
-            maxColumns: Number.isFinite(override.layout?.maxColumns) ? override.layout.maxColumns : base.layout.maxColumns,
-            minCardWidth: Number.isFinite(override.layout?.minCardWidth) ? override.layout.minCardWidth : base.layout.minCardWidth,
+            maxColumns: Number.isFinite(override.layout?.maxColumns)
+                ? override.layout.maxColumns
+                : base.layout.maxColumns,
+            minCardWidth: Number.isFinite(override.layout?.minCardWidth)
+                ? override.layout.minCardWidth
+                : base.layout.minCardWidth,
             pageWidth: Number.isFinite(override.layout?.pageWidth) ? override.layout.pageWidth : base.layout.pageWidth
         },
         visibility: {
@@ -337,9 +348,17 @@ function mergeConfig(base, override) {
                     : Boolean(base.privacy?.autoFetchFavicons ?? true)
         },
         collapsedSections: Array.isArray(override.collapsedSections)
-            ? [...new Set(override.collapsedSections.filter((name) => typeof name === "string" && name.trim().length > 0))]
+            ? [
+                  ...new Set(
+                      override.collapsedSections.filter((name) => typeof name === "string" && name.trim().length > 0)
+                  )
+              ]
             : Array.isArray(base.collapsedSections)
-              ? [...new Set(base.collapsedSections.filter((name) => typeof name === "string" && name.trim().length > 0))]
+              ? [
+                    ...new Set(
+                        base.collapsedSections.filter((name) => typeof name === "string" && name.trim().length > 0)
+                    )
+                ]
               : [],
         search: {
             defaultEngine: override.search?.defaultEngine || base.search.defaultEngine,
@@ -355,7 +374,7 @@ function applyLocalAssets(config, localAssets) {
     const linkIcons = assets.linkIcons || {};
     const linksWithIds = ensureLinkIds(config.links || []);
     const links = linksWithIds.map((link) => {
-        const override = isDataUrl(link.iconOverride) ? "" : (link.iconOverride || "");
+        const override = isDataUrl(link.iconOverride) ? "" : link.iconOverride || "";
         const localOverride = linkIcons[link.id];
         return { ...link, iconOverride: localOverride || override };
     });
@@ -658,7 +677,7 @@ async function resolveFavicon(link) {
 function safeParseUrl(value) {
     try {
         return new URL(value);
-    } catch (error) {
+    } catch (_error) {
         return null;
     }
 }
@@ -674,7 +693,7 @@ async function fetchFavicon(url) {
             return null;
         }
         return await blobToDataUrl(blob);
-    } catch (error) {
+    } catch (_error) {
         return null;
     }
 }
@@ -928,21 +947,21 @@ function setupSettings() {
         updateEngineRowDragState();
     });
 
-        backgroundUpload.addEventListener("change", async (event) => {
-            const files = Array.from(event.target.files || []);
-            updateFileLabel(backgroundUploadName, files, "No files selected");
-            for (const file of files) {
-                const dataUrl = await fileToDataUrl(file);
-                addBackgroundRow(dataUrl);
-                storeBackgroundThumb(dataUrl);
-            }
-            if (files.length) {
-                backgroundMode.value = "images";
-                activeConfig = { ...activeConfig, backgroundMode: "images" };
-                renderBackground(activeConfig);
-            }
-            event.target.value = "";
-        });
+    backgroundUpload.addEventListener("change", async (event) => {
+        const files = Array.from(event.target.files || []);
+        updateFileLabel(backgroundUploadName, files, "No files selected");
+        for (const file of files) {
+            const dataUrl = await fileToDataUrl(file);
+            addBackgroundRow(dataUrl);
+            storeBackgroundThumb(dataUrl);
+        }
+        if (files.length) {
+            backgroundMode.value = "images";
+            activeConfig = { ...activeConfig, backgroundMode: "images" };
+            renderBackground(activeConfig);
+        }
+        event.target.value = "";
+    });
 
     quotesUpload.addEventListener("change", async (event) => {
         const file = event.target.files?.[0];
@@ -1010,7 +1029,7 @@ function setupSettings() {
                 return;
             }
             renderSettings(mergeConfig(baseConfig, payload));
-        } catch (error) {
+        } catch (_error) {
             console.error("Invalid config file");
         } finally {
             event.target.value = "";
@@ -1023,9 +1042,7 @@ function setupSettings() {
             return;
         }
         await clearSyncStorage();
-        await Promise.all([
-            storageLocal.remove([LOCAL_ASSETS_KEY, FAVICON_CACHE_KEY, SYNC_META_KEY])
-        ]);
+        await Promise.all([storageLocal.remove([LOCAL_ASSETS_KEY, FAVICON_CACHE_KEY, SYNC_META_KEY])]);
         faviconCache = {};
         activeConfig = await loadConfig();
         renderAll(activeConfig);
@@ -1201,7 +1218,7 @@ function setupSettings() {
         if (!isRearranging) {
             return;
         }
-        const handle = event.target.closest("[data-drag=\"section\"]");
+        const handle = event.target.closest('[data-drag="section"]');
         const card = event.target.closest(".link-card");
         if (handle && !card) {
             const sectionEl = handle.closest(".section");
@@ -1323,10 +1340,8 @@ function setupSettingsNav(panel, nav) {
     if (!panel || !nav) {
         return;
     }
-    const links = Array.from(nav.querySelectorAll("a[href^=\"#settings-\"]"));
-    const sections = links
-        .map((link) => document.querySelector(link.getAttribute("href")))
-        .filter(Boolean);
+    const links = Array.from(nav.querySelectorAll('a[href^="#settings-"]'));
+    const sections = links.map((link) => document.querySelector(link.getAttribute("href"))).filter(Boolean);
 
     if (!links.length || !sections.length) {
         return;
@@ -1412,7 +1427,10 @@ function renderSettings(config) {
 
 function normalizeQuotesImport(payload) {
     if (Array.isArray(payload)) {
-        return payload.filter((line) => typeof line === "string").map((line) => line.trim()).filter(Boolean);
+        return payload
+            .filter((line) => typeof line === "string")
+            .map((line) => line.trim())
+            .filter(Boolean);
     }
     if (typeof payload === "string") {
         return payload
@@ -1434,7 +1452,6 @@ function normalizeQuotesImport(payload) {
     }
     return [];
 }
-
 
 function renderLinksEditor(links, sectionsOverride) {
     const container = document.getElementById("links-editor");
@@ -1667,7 +1684,11 @@ function renderSearchEditor(search) {
     container.innerHTML = "";
     engines.forEach((engine) => addEngineRow(engine, container, template));
     if (!engines.length) {
-        addEngineRow({ id: "google", label: "Google", url: "https://www.google.com/search", queryParam: "q" }, container, template);
+        addEngineRow(
+            { id: "google", label: "Google", url: "https://www.google.com/search", queryParam: "q" },
+            container,
+            template
+        );
     }
     refreshDefaultEngineOptions(search.defaultEngine);
     updateEngineRowDragState();
@@ -1703,7 +1724,8 @@ function renderLayoutEditor(layout) {
     const defaults = { maxColumns: 4, minCardWidth: 180, pageWidth: 72 };
     resizableInput.checked = isResizable;
     const maxColumns = isResizable && Number.isFinite(layout?.maxColumns) ? layout.maxColumns : defaults.maxColumns;
-    const minCardWidth = isResizable && Number.isFinite(layout?.minCardWidth) ? layout.minCardWidth : defaults.minCardWidth;
+    const minCardWidth =
+        isResizable && Number.isFinite(layout?.minCardWidth) ? layout.minCardWidth : defaults.minCardWidth;
     const pageWidth = isResizable && Number.isFinite(layout?.pageWidth) ? layout.pageWidth : defaults.pageWidth;
     maxColumnsInput.value = maxColumns;
     minCardWidthInput.value = minCardWidth;
@@ -2640,7 +2662,7 @@ async function loadV2SyncConfig() {
     try {
         const parsed = JSON.parse(serialized);
         return { status: "ok", config: parsed, meta };
-    } catch (error) {
+    } catch (_error) {
         return { status: "corrupt", reason: "parse error" };
     }
 }
@@ -2658,7 +2680,7 @@ async function cleanupTempV2Keys(meta) {
 // Saves using two-phase temp→final writes with per-item/total quota preflight.
 async function saveSyncConfigV2(syncConfig, options = {}) {
     // Two-phase write: temp -> final, with quota preflight on both; legacy keys cleaned post-success.
-    const opts = { silent: false, ...options };
+    const _opts = { silent: false, ...options };
     const serialized = JSON.stringify(syncConfig ?? {});
     const chunks = chunkStringBySize(serialized, SYNC_CHUNK_CHAR_TARGET);
     const meta = {

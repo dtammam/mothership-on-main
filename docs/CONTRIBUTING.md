@@ -21,11 +21,13 @@ These apply to every change. They are not aspirational — they are the standard
 ## Coding standards
 
 ### Language and tooling
+
 - **Stack:** HTML + CSS + JavaScript only. No frameworks, no bundlers, no TypeScript, no dependency chains.
 - **Module style:** Plain `<script>` tags (no ES modules in production yet — extension context limitations). Keep scripts to a small number of well-scoped files.
 - **Manifest:** MV3 (Manifest Version 3). Do not introduce MV2 patterns.
 
 ### JavaScript
+
 - Use `async`/`await` over raw promise chains.
 - Use `const` by default; `let` only when reassignment is necessary; never `var`.
 - Use strict equality (`===` / `!==`).
@@ -36,29 +38,34 @@ These apply to every change. They are not aspirational — they are the standard
 - No `@ts-nocheck` or equivalent suppression patterns.
 
 ### CSS
+
 - Use the existing `css/style.css` convention. No CSS-in-JS, no preprocessors.
 - Prefer class selectors over IDs for styling. IDs are for JS hooks.
 - Avoid `!important` unless overriding third-party styles (there are none currently).
 
 ### HTML
+
 - Keep `index.html` as the single-page entry point.
 - Semantic elements where appropriate (`section`, `nav`, `header`, `main`).
 - No inline styles; no inline event handlers (`onclick`). Bind in JS.
 
 ### Storage
+
 - All `chrome.storage.sync` operations go through the v2 chunked storage module (`js/script.js` storage functions).
 - Always preflight quota before writing.
 - Two-phase writes (temp → final) for corruption safety.
 - Legacy key detection and migration must remain intact.
 
 ### Git and workflow
+
 - Branch naming: `feature/`, `bugfix/`, `infra/`, `docs/` prefixes.
-- Commit messages: imperative mood, concise, explain the *why* not just the *what*.
+- Commit messages: imperative mood, concise, explain the _why_ not just the _what_.
 - No direct pushes to `main`. All changes via PR.
 - Never use `--no-verify` on commits or pushes.
 - Log significant changes in `PROGRESS.md` (timestamped, single-line entries).
 
 ### Release process
+
 - Packaging scripts live in `scripts/` (currently PowerShell).
 - CI builds QA and prod zips on merge to `main` via `.github/workflows/edge-packages.yml`.
 - Every release zip gets SHA-256 hashes for integrity verification.
