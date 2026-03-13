@@ -1,4 +1,4 @@
-// Loads js/script.js into a sandboxed context with mock globals.
+// Loads js/*.js modules into a sandboxed context with mock globals.
 // Returns the window.msomStorage API and other exposed globals for testing.
 
 import { readFileSync } from "fs";
@@ -9,7 +9,7 @@ import { createDocumentMock } from "./dom-mock.js";
 
 // Load module files in dependency order (concatenated for VM sandbox)
 const jsDir = resolve(import.meta.dirname, "../../js");
-const moduleFiles = ["constants.js", "utils.js", "storage.js", "config.js", "render.js", "customize.js", "script.js"];
+const moduleFiles = ["constants.js", "utils.js", "storage.js", "config.js", "render.js", "customize.js", "init.js"];
 const scriptSource = moduleFiles.map((f) => readFileSync(resolve(jsDir, f), "utf-8")).join("\n");
 
 export function loadScript(options = {}) {

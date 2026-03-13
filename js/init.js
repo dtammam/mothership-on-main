@@ -1,14 +1,5 @@
-/*
-    Mothership on Main Interactivity
-    Config-driven controls for links, quotes, backgrounds, and search.
-    Author: Dean Tammam
-    Date: 4/20/2023
-*/
-
-// Constants loaded from js/constants.js
-// Utilities loaded from js/utils.js
-// Storage loaded from js/storage.js
-// Customize panel loaded from js/customize.js
+// Entry point: global mutable state, initialization, and public API exports.
+// Loaded last — depends on all other modules.
 
 let activeConfig = null;
 let faviconCache = {};
@@ -30,6 +21,7 @@ if (!window.__MSOM_DISABLE_UI__) {
     });
 }
 
+// Bootstrap the extension: load config and caches, then render.
 async function init() {
     const [config, cache, thumbs] = await Promise.all([
         loadConfig(),
