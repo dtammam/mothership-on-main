@@ -11,8 +11,9 @@ Safely stage and commit without pushing. All quality gates enforced.
 ## Workflow
 
 1. Run git status and git diff to understand what will be staged.
-2. Stage changes by file (prefer explicit paths over git add .).
-3. Commit using HEREDOC format with co-author trailer.
+2. **PROGRESS check.** Read `PROGRESS.md` and check whether the current branch's work is already logged. If not, and the changes represent a meaningful milestone (not just a docs tweak), append a single-line entry in the format: `YYYY-MM-DD HH:mm - branch-name - summary`. Stage the updated file alongside other changes.
+3. Stage changes by file (prefer explicit paths over git add .).
+4. Commit using HEREDOC format with co-author trailer.
 
 ## Failure handling
 
