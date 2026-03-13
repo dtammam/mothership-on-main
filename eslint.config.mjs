@@ -219,7 +219,7 @@ export default [
   {
     // constants.js declares globals consumed by other js/*.js files
     // Module files that declare globals consumed by other js/*.js files
-    files: ["js/constants.js", "js/utils.js", "js/storage.js", "js/config.js", "js/script.js"],
+    files: ["js/constants.js", "js/utils.js", "js/storage.js", "js/config.js", "js/render.js", "js/script.js"],
     rules: {
       "no-unused-vars": "off",
       "no-redeclare": "off",
