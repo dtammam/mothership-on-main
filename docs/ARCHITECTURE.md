@@ -1,55 +1,112 @@
-# ARCHITECTURE.md — Mothership on Main (Edge extension)
+# Architecture — Mothership on Main
 
-## 1) What this is
-Mothership on Main is a Microsoft Edge (Chromium) extension that replaces the new tab/home experience with a custom UI. It is intentionally simple: plain HTML, CSS, and JavaScript.
+## What this is
 
-This document focuses on the current architecture and the storage-quota fix branch.
+Mothership on Main is a Microsoft Edge (Chromium) extension that replaces the new tab and home page with a configurable command center. It provides link cards organized by sections, a multi-engine search bar, rotating quotes, and customizable backgrounds — all controlled through a built-in Customize panel.
 
-## 2) Runtime model (high level)
-Typical extension surfaces involved (confirm in `manifest.json`):
-- New Tab override page (UI)
-- Options / Settings page (UI for configuration)
-- Background script / Service Worker (optional, depending on MV2/MV3)
+The stack is intentionally simple: plain HTML, CSS, and JavaScript. No frameworks, no build tools, no dependencies.
+
+## Runtime model
+
+This is a Manifest V3 Chrome extension with a single surface:
+
+- **New Tab override** (`index.html`) — the only UI entry point. Serves as both the main page and the Customize panel host.
+- **No background script / service worker** — all logic runs in the new tab page context.
+- **No options page** — configuration is handled inline via the Customize panel.
 
 Primary flows:
-1. **Startup**: UI loads → reads config → renders
-2. **User config update**: user edits settings → config saved → UI re-renders
+1. **Page load:** `index.html` loads → `js/script.js` executes → config read from `chrome.storage.sync` → UI renders with user data.
+2. **Config update:** User edits settings in Customize → config saved via v2 chunked storage → UI re-renders.
+3. **First run / migration:** If no v2 config exists, checks for legacy single-key config → auto-migrates to v2 chunked format.
 
-## 3) Data model: configuration
-The extension has a configuration object (schema defined in code) that controls UI behavior. Historically, this config was saved as a single item in `chrome.storage.sync`, which fails when the serialized config exceeds the per-item limit.
+## Repo layout
 
-Chromium sync limits:
-- Approximately **100KB total** for `storage.sync`
-- Approximately **8KB per item** :contentReference[oaicite:3]{index=3}
-- Per-item size is measured by JSON stringification of value plus key length :contentReference[oaicite:4]{index=4}
+```
+mothership-on-main/
+├── index.html              # Single-page entry point (new tab override)
+├── manifest.json           # MV3 extension manifest
+├── config.json             # Default/seed configuration
+├── css/
+│   └── style.css           # All styles
+├── js/
+│   └── script.js           # All application logic
+├── images/
+│   ├── icon.png            # Extension icon
+│   ├── icon.ico            # Favicon
+│   ├── Default.png         # Screenshot for readme
+│   └── Customize.png       # Screenshot for readme
+├── scripts/
+│   ├── package-edge.ps1    # Release packaging (PowerShell)
+│   └── build-release-body.ps1  # Release notes generation
+├── tests/
+│   ├── storage-harness.html    # Manual storage testing page
+│   ├── storage-harness.js      # Storage harness logic
+│   └── storage-harness-boot.js # Harness bootstrap
+├── docs/                   # System of record (see docs/index.md)
+├── .claude/                # Agent harness (hooks, commands, settings)
+├── hooks/                  # Git hooks (pre-commit, pre-push)
+└── .github/
+    └── workflows/
+        └── edge-packages.yml   # CI: QA/prod zip packaging + GitHub releases
+```
 
-### Problem
-When config grows beyond ~8KB, `chrome.storage.sync.set()` fails with:
-- `QUOTA_BYTES_PER_ITEM quota exceeded`
+## Data model: configuration
 
-Result: users cannot save larger configs; state appears to “not stick”.
+The extension's behavior is driven by a single configuration object. The default shape is defined in `config.json`:
 
-## 4) Storage architecture (v2: chunked config)
+| Field | Type | Purpose |
+|-------|------|---------|
+| `branding` | object | Title, subtitle, quotes heading |
+| `sections` | string[] | Ordered list of link section names |
+| `links` | object[] | Links with section, name, url, iconOverride |
+| `quotes` | string[] | Rotating quotes shown on page load |
+| `backgroundMode` | string | `"gradient_signature"`, `"image"`, etc. |
+| `backgrounds` | array | User-uploaded background images (base64) |
+| `layout` | object | Column count, card width, page width, resizable flag |
+| `visibility` | object | Toggle search, quotes, links sections |
+| `privacy` | object | Favicon auto-fetch toggle |
+| `collapsedSections` | string[] | Sections collapsed by user |
+| `search` | object | Default engine ID + array of engine definitions |
 
-### Goals
-- Allow configs up to the practical maximum of sync storage (~100KB total)
-- Avoid breaking existing users
-- Prevent partial-write corruption
-- Keep implementation small and dependency-free
+## Storage architecture (v2: chunked config)
+
+User config is stored in `chrome.storage.sync` using a versioned, chunked format to work within Chromium's quota limits.
 
 ### Keyspace
 All keys are prefixed and versioned:
+- `msom:cfg:v2:meta` — `{ version: 2, chunkCount: N, updatedAt: ISO }`
+- `msom:cfg:v2:chunk:000` through `msom:cfg:v2:chunk:NNN` — string segments of JSON-serialized config
 
-- `msom:cfg:v2:meta`
-- `msom:cfg:v2:chunk:000`
-- `msom:cfg:v2:chunk:001`
-- …
+### Quota constraints
+- **Per-item limit:** ~8,192 bytes (key + JSON value). Chunks target 6,500–7,000 bytes.
+- **Total sync limit:** ~102,400 bytes. Preflight check before every write.
 
-Meta example:
-```json
-{
-  "version": 2,
-  "chunkCount": 4,
-  "updatedAt": "2026-02-03T00:00:00.000Z"
-}
-"\n### Notes for contributors\n- V2 writes are two-phase (temp → final) with per-item and total quota preflight.\n- Legacy keys (single mothershipSyncConfig and v1 chunked) auto-migrate on first load; they remain until v2 write succeeds.\n- Storage harness lives in tests/ and can be opened directly for quota/migration exercises; it is not referenced in the manifest.\n- Keep PROGRESS.md updated with timestamped, human-readable summaries; README points there for release history.\n"
+### Write safety
+- Two-phase writes: temp keys (`msom:cfg:v2:tmp:*`) → final keys → cleanup.
+- Partial write detection on load with fallback to last known good state.
+
+### Migration
+- Legacy single-key (`mothershipSyncConfig`) auto-migrates to v2 on first load.
+- Legacy keys retained until v2 write succeeds.
+- Migration is idempotent.
+
+## CI / Release pipeline
+
+On merge to `main`, GitHub Actions (`.github/workflows/edge-packages.yml`):
+1. Builds two zip packages: `*-qa.zip` (name suffixed with "QA") and `*-prod.zip`.
+2. Creates a GitHub Release (`main-<sha>`) with both zips + SHA-256 hashes.
+3. On version tags (`v*`), attaches the same artifacts to a versioned release.
+
+Local packaging: `scripts/package-edge.ps1` (PowerShell).
+
+## Key protocols
+
+### Config lifecycle
+```
+Page load → loadConfig() → [try v2 chunked] → [fallback: legacy key → migrate] → render
+User edit → saveConfig() → [preflight quota] → [two-phase write] → success/error feedback
+```
+
+### Extension permissions
+- `storage` — for `chrome.storage.sync`
+- `host_permissions: https://*/* , http://*/*` — for favicon fetching

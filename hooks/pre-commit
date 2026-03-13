@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "=== pre-commit ==="
+
+# Validate JSON files are well-formed
+echo "Checking JSON syntax..."
+for f in config.json manifest.json; do
+  if [ -f "$f" ]; then
+    if ! python3 -m json.tool "$f" > /dev/null 2>&1; then
+      echo "ERROR: $f is not valid JSON"
+      exit 1
+    fi
+    echo "  ✓ $f"
+  fi
+done
+
+# Basic JS syntax check (catches gross syntax errors)
+echo "Checking JS syntax..."
+for f in $(git diff --cached --name-only --diff-filter=ACM -- '*.js'); do
+  if [ -f "$f" ]; then
+    if ! node --check "$f" 2>/dev/null; then
+      echo "ERROR: $f has syntax errors"
+      exit 1
+    fi
+    echo "  ✓ $f"
+  fi
+done
+
+# Placeholder: lint and format checks will go here once tooling is added
+# See exec plan: 2026-03-13-testing-and-linting-infrastructure.md
+
+echo "=== pre-commit passed ==="
