@@ -109,7 +109,7 @@ pwsh scripts/package-edge.ps1
 
 Active plans currently in progress:
 
-_(none)_
+- `2026-03-13-test-and-debt-sweep.md` — test coverage for Search/Customize/Drag domains + FOUC fix + cross-platform scripts
 
 Completed plans:
 
