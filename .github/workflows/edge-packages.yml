@@ -1,64 +1,121 @@
 name: Edge Extension Packages
 
 on:
-  push:
-    branches:
-      - main
-    tags:
-      - "v*"
-  workflow_dispatch:
+    push:
+        branches:
+            - main
+        tags:
+            - "v*"
+    workflow_dispatch:
 
 permissions:
-  contents: write
+    contents: write
 
 jobs:
-  build-packages:
-    runs-on: ubuntu-latest
+    # Detect whether only docs/harness files changed (no runtime code)
+    check-changes:
+        runs-on: ubuntu-latest
+        outputs:
+            docs_only: ${{ steps.filter.outputs.docs_only }}
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 2
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+            - name: Check for runtime changes
+              id: filter
+              run: |
+                  # Compare against parent commit
+                  CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "")
+                  if [ -z "$CHANGED" ]; then
+                    echo "docs_only=false" >> "$GITHUB_OUTPUT"
+                    exit 0
+                  fi
+                  # Files that are NOT docs/harness/tooling-only
+                  RUNTIME=$(echo "$CHANGED" | grep -vE '^(docs/|tests/|hooks/|\.claude/|\.github/|\.prettier|eslint\.config|vitest\.config|package\.json|package-lock\.json|CLAUDE\.md|PROGRESS\.md|TESTING\.md|PRIVACY\.md|readme\.md|\.gitignore)' || true)
+                  if [ -z "$RUNTIME" ]; then
+                    echo "docs_only=true" >> "$GITHUB_OUTPUT"
+                  else
+                    echo "docs_only=false" >> "$GITHUB_OUTPUT"
+                  fi
 
-      - name: Build QA and prod extension packages
-        shell: pwsh
-        run: ./scripts/package-edge.ps1 -OutputDir dist/edge-packages
+    # Lint and test (runs on every push, even docs-only)
+    quality-gate:
+        runs-on: ubuntu-latest
+        needs: check-changes
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
 
-      - name: Build standardized release body
-        id: release_meta
-        shell: pwsh
-        run: ./scripts/build-release-body.ps1 -OutputDir dist/edge-packages -ProgressEntries 1
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+                  cache: "npm"
 
-      - name: Upload package artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: edge-extension-packages-${{ github.sha }}
-          path: dist/edge-packages/*
-          if-no-files-found: error
-          retention-days: 90
+            - name: Install dev dependencies
+              run: npm ci
 
-      - name: Publish merge release assets (main)
-        if: github.ref == 'refs/heads/main'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: main-${{ github.sha }}
-          name: Main build v${{ steps.release_meta.outputs.manifest_version }} (${{ steps.release_meta.outputs.short_sha }})
-          target_commitish: ${{ github.sha }}
-          prerelease: false
-          generate_release_notes: false
-          body_path: ${{ steps.release_meta.outputs.release_body_path }}
-          files: |
-            dist/edge-packages/*.zip
-            dist/edge-packages/checksums.txt
-            dist/edge-packages/release-body.md
+            - name: Run lint
+              run: npm run lint
 
-      - name: Publish release assets for version tags
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
-        with:
-          name: Release ${{ github.ref_name }} (manifest v${{ steps.release_meta.outputs.manifest_version }})
-          generate_release_notes: false
-          body_path: ${{ steps.release_meta.outputs.release_body_path }}
-          files: |
-            dist/edge-packages/*.zip
-            dist/edge-packages/checksums.txt
-            dist/edge-packages/release-body.md
+            - name: Check formatting
+              run: npm run format:check
+
+            - name: Run tests
+              run: npm test
+
+    # Package and release (skipped for docs-only changes)
+    build-packages:
+        runs-on: ubuntu-latest
+        needs: [check-changes, quality-gate]
+        if: needs.check-changes.outputs.docs_only != 'true' || startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Build QA and prod extension packages
+              shell: pwsh
+              run: ./scripts/package-edge.ps1 -OutputDir dist/edge-packages
+
+            - name: Build standardized release body
+              id: release_meta
+              shell: pwsh
+              run: ./scripts/build-release-body.ps1 -OutputDir dist/edge-packages -ProgressEntries 1
+
+            - name: Upload package artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                  name: edge-extension-packages-${{ github.sha }}
+                  path: dist/edge-packages/*
+                  if-no-files-found: error
+                  retention-days: 90
+
+            - name: Publish merge release assets (main)
+              if: github.ref == 'refs/heads/main'
+              uses: softprops/action-gh-release@v2
+              with:
+                  tag_name: main-${{ github.sha }}
+                  name: Main build v${{ steps.release_meta.outputs.manifest_version }} (${{ steps.release_meta.outputs.short_sha }})
+                  target_commitish: ${{ github.sha }}
+                  prerelease: false
+                  generate_release_notes: false
+                  body_path: ${{ steps.release_meta.outputs.release_body_path }}
+                  files: |
+                      dist/edge-packages/*.zip
+                      dist/edge-packages/checksums.txt
+                      dist/edge-packages/release-body.md
+
+            - name: Publish release assets for version tags
+              if: startsWith(github.ref, 'refs/tags/v')
+              uses: softprops/action-gh-release@v2
+              with:
+                  name: Release ${{ github.ref_name }} (manifest v${{ steps.release_meta.outputs.manifest_version }})
+                  generate_release_notes: false
+                  body_path: ${{ steps.release_meta.outputs.release_body_path }}
+                  files: |
+                      dist/edge-packages/*.zip
+                      dist/edge-packages/checksums.txt
+                      dist/edge-packages/release-body.md

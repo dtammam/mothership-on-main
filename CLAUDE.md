@@ -8,6 +8,7 @@ The real sources of truth live in `docs/`. Read them, not this file.
 Every conversation follows this sequence. No exceptions.
 
 ### On start (before writing any code)
+
 1. Read the SessionStart hook output (branch, active plans, tech debt count).
 2. Read `docs/index.md` → `docs/CONTRIBUTING.md` (design principles + coding standards).
 3. If active exec plans exist, read them. Understand what's in progress before starting new work.
@@ -15,11 +16,13 @@ Every conversation follows this sequence. No exceptions.
 5. For new work: use `/kickoff` (simple) or `/kickoff-complex` (multi-domain). Do not start coding without a brief or plan.
 
 ### During work
+
 - Follow `docs/CONTRIBUTING.md` design principles on every change.
 - Respect performance budgets (`docs/RELIABILITY.md`) and layer boundaries.
 - Update the active plan's progress log after each meaningful milestone (append-only, dated).
 
 ### On finish (before the conversation ends)
+
 - If behavior changed, update exactly one doc (see "Change hygiene" below).
 - If debt was created, add it to `docs/exec-plans/tech-debt-tracker.md`.
 - If a plan was completed, check all acceptance criteria, move to `completed/`, update this file's plan list.
@@ -65,16 +68,21 @@ These apply to every change, no exceptions:
 ## Workflow
 
 ### Small changes
+
 Make the change, update exactly one doc if behavior changed, write a test.
 
 ### Complex changes (multi-domain, data model, operational risk)
+
 Write an execution plan first:
+
 - Create `docs/exec-plans/active/<yyyy-mm-dd>-<short-title>.md`
 - Use the template in `docs/PLANS.md`
 - Do not write significant code until the plan is in place
 
 ### Change hygiene
+
 When behavior changes, update exactly one of:
+
 - `docs/RELIABILITY.md` — if it affects budgets or reliability rules
 - `docs/ARCHITECTURE.md` — if it affects domains or system design
 - `docs/exec-plans/tech-debt-tracker.md` — if it creates debt
@@ -100,6 +108,7 @@ pwsh scripts/package-edge.ps1
 ## Exec plan ownership
 
 Active plans currently in progress:
+
 - `2026-03-13-testing-and-linting-infrastructure.md` — establish test runner, linter, and formatter
 
 Completed plans:
