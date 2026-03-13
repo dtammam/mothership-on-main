@@ -109,10 +109,11 @@ pwsh scripts/package-edge.ps1
 
 Active plans currently in progress:
 
-- `2026-03-13-testing-and-linting-infrastructure.md` — establish test runner, linter, and formatter
+- `2026-03-13-test-coverage-expansion.md` — expand automated test coverage across all domains
 
 Completed plans:
-(none yet)
+
+- `2026-03-13-testing-and-linting-infrastructure.md` — establish test runner, linter, and formatter
 
 Append to the progress log (dated, append-only) when making meaningful advances on a plan.
 Do not rewrite or summarize away prior log entries.
