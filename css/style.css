@@ -55,6 +55,12 @@ body {
     background-size: cover;
     background-repeat: no-repeat;
     background-attachment: fixed;
+    transition: opacity 0.08s ease-out;
+}
+
+/* Hide body until init() completes renderAll() to prevent FOUC. */
+body.loading {
+    opacity: 0;
 }
 
 body::before {

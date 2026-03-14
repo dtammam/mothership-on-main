@@ -6,7 +6,7 @@ Scale: A (strong) — F (unacceptable)
 
 Layers: Types, Storage, UI, Styling, Tests
 
-**Last updated:** 2026-03-13
+**Last updated:** 2026-03-14
 
 ## Domains
 
@@ -14,19 +14,18 @@ Layers: Types, Storage, UI, Styling, Tests
 | ----------------- | ----- | ------- | --- | ------- | ----- | ------- |
 | Config management | —     | B       | —   | —       | A     | A       |
 | Link rendering    | —     | —       | —   | —       | A     | A       |
-| Search            | —     | —       | —   | —       | C     | C       |
-| Customize panel   | —     | —       | —   | —       | D     | D       |
+| Search            | —     | —       | —   | —       | A     | A       |
+| Customize panel   | —     | —       | —   | —       | A     | A       |
 | Backgrounds       | —     | —       | —   | —       | A     | A       |
 | Quotes            | —     | —       | —   | —       | A     | A       |
 | Import/Export     | —     | —       | —   | —       | A     | A       |
-| Drag & reorder    | —     | —       | —   | —       | D     | D       |
+| Drag & reorder    | —     | —       | —   | —       | A     | A       |
 
-_Module split complete (tech debt #1 closed). True unit isolation now possible._
+_All domains at A-grade. Module split + DOM mock extensions enable full unit isolation._
 
 ## Systemic gaps
 
 - No TypeScript — no static type checking (accepted constraint).
-- FOUC on load — tech debt #4.
 
 ## Notes
 
@@ -59,14 +58,25 @@ import modes, normalizeQuotesImport → mergeConfig pipeline, edge cases (empty 
 partial overrides, NaN/Infinity layout values, non-boolean visibility, whitespace-only
 collapsedSections, deduplication).
 
-Search graded C (Tests): collectSearch tested indirectly via import-export round-trips and
-search-only import mode. No direct tests for renderSearch DOM rendering or engine row
-management. Next: add renderSearch DOM tests and collectSearch unit tests.
+Search upgraded C → A (Tests): renderSearch DOM tests (engine options, default engine,
+form action, queryParam), collectSearch unit tests (populated/empty editor, skipping
+invalid rows, label/queryParam defaults), renderSearchEditor tests (population, default
+row, default-engine select sync), addEngineRow + refreshDefaultEngineOptions integration.
 
-Customize panel graded D (Tests): no direct tests for setupSettings, renderSettings, or
-any editor renderer. These are heavily DOM-dependent and were not testable pre-split.
-Next: add DOM tests for editor renderers (renderLinksEditor, renderBackgroundsEditor, etc.).
+Customize panel upgraded D → A (Tests): renderSettings integration (all sub-renderers),
+renderLinksEditor (field values, sections, empty default, icon overrides, re-render),
+renderBackgroundsEditor (populated rows, empty default, re-render),
+renderQuotesEditor (join with newlines, empty, single),
+renderLayoutEditor + updateLayoutControlState (resizable/defaults, disabled state),
+renderVisibilityEditor + renderPrivacyEditor (config values, defaults, undefined),
+renderBrandingEditor (field population, missing/undefined),
+renderBackgroundModeEditor (set value, default fallback),
+createLinksSection (DOM structure), ensureLinksSection (create/reuse),
+link section management (refreshLinkSectionChoices, get/set/custom section value).
 
-Drag & reorder graded D (Tests): no direct tests for findReorderTarget, setRearrangeMode,
-updateLinkRowDragState, or any drag event handlers. Next: add unit tests for
-findReorderTarget and setRearrangeMode with DOM mocks.
+Drag & reorder upgraded D → A (Tests): findReorderTarget (closest above, null when
+none above, skip dragging, single element, empty container, multiple above),
+setRearrangeMode (CSS classes, toggle text, via init()),
+updateLinkRowDragState (draggable based on rearranging state),
+updateEngineRowDragState (draggable + aria-disabled),
+updateMainDragState (link cards, sections, handles).
