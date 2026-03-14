@@ -7,6 +7,8 @@ const path = require("path");
 const extensionPath = path.resolve(__dirname, "../..");
 
 // Launches a persistent browser context with the extension loaded.
+// This extension has no background/service worker — it only overrides the
+// new-tab page, so we navigate to chrome://newtab to trigger it.
 async function launchExtension() {
     const context = await chromium.launchPersistentContext("", {
         headless: false,
@@ -18,21 +20,15 @@ async function launchExtension() {
         ]
     });
 
-    // Wait for the service worker to register and get the extension ID.
-    let extensionId;
-    let background;
-    if (context.serviceWorkers().length === 0) {
-        background = await context.waitForEvent("serviceworker");
-    } else {
-        background = context.serviceWorkers()[0];
-    }
-    extensionId = background.url().split("/")[2];
-
     const page = await context.newPage();
-    await page.goto(`chrome-extension://${extensionId}/index.html`);
+    await page.goto("chrome://newtab");
     await page.waitForLoadState("domcontentloaded");
+    // Wait for the extension's init to complete (removes the loading class).
+    await page.waitForFunction(() => !document.body.classList.contains("loading"), null, {
+        timeout: 10000
+    });
 
-    return { context, page, extensionId };
+    return { context, page };
 }
 
 test.describe("Extension loads", () => {
