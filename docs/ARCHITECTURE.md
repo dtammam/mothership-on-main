@@ -95,6 +95,7 @@ All keys are prefixed and versioned:
 ### Write safety
 
 - Two-phase writes: temp keys (`msom:cfg:v2:tmp:*`) → final keys → cleanup.
+- **Conditional write strategy:** payloads under 50% of total quota use two-phase (temp→final). Payloads over 50% use clear-then-write to avoid doubling storage (temp + final keys coexisting).
 - Partial write detection on load with fallback to last known good state.
 
 ### Migration
@@ -119,8 +120,22 @@ Local packaging: `scripts/package-edge.ps1` (PowerShell).
 
 ```
 Page load → loadConfig() → [try v2 chunked] → [fallback: legacy key → migrate] → render
-User edit → saveConfig() → [preflight quota] → [two-phase write] → success/error feedback
+User edit → saveConfig() → [preflight quota] → [conditional write] → success/error feedback
 ```
+
+### Bookmark import flow
+
+```
+File select → parseChromiumBookmarks(html) → folder picker modal (checkboxes + live quota) →
+previewBookmarkImport() → [quota preflight] → [user confirms] → merge into config → save → toast
+```
+
+Safety layers: (1) preview estimates byte cost before write, (2) `saveSyncConfigV2` has built-in preflight, (3) conditional write strategy protects existing data. Over-quota imports are hard-blocked.
+
+### Section visibility
+
+- **Collapsed sections:** header visible, links grid hidden. Stored in `collapsedSections[]`. Toggle available in rearrange mode.
+- **Hidden sections:** fully removed from main page render. Stored in `hiddenSections[]`. Manageable via hidden-sections bar in settings. Position preserved across hide/unhide cycles via merge algorithm in `persistActiveConfig()`.
 
 ### Extension permissions
 

@@ -1,7 +1,7 @@
 # Execution Plan: Feature Batch
 
 **Created:** 2026-03-14
-**Status:** Implementation complete — pending review
+**Status:** Complete
 
 ## Goal
 
@@ -377,3 +377,5 @@ Phase 5  (CI + Playwright)            — benefits from all phases done, but can
 - 2026-03-14: Switched bookmark parser from JSON to HTML (Netscape Bookmark File Format) via DOMParser — Chromium exports HTML, not JSON.
 - 2026-03-14: Large payload writes (>50% quota) skip two-phase temp→final pattern to avoid doubling storage. Clear-then-write strategy instead.
 - 2026-03-14: Added selective folder import modal — users pick which bookmark folders to import, with real-time quota feedback. Replaces all-or-nothing import.
+- 2026-03-14: Polish round — fixed section header spacing, added unit labels (px/%) to layout controls, fixed drag-to-right reordering, added unsaved changes indicator, auto-save on rearrange exit.
+- 2026-03-14: All features verified on Windows + Mac Edge. Manifest bumped to v1.5.0. Plan complete — moving to completed.

@@ -109,11 +109,11 @@ pwsh scripts/package-edge.ps1
 
 Active plans currently in progress:
 
-- `2026-03-14-feature-batch.md` — 7 features: bookmark import, CI hooks + Playwright, open-all-links, collapse without rearrange, section select bug fix, true section hiding, version label
 - `2026-03-14-design-system.md` — design system: tokenize all colors, eliminate hardcoded values, light mode, gradient-aware theming (future, not started)
 
 Completed plans:
 
+- `2026-03-14-feature-batch.md` — 7 features: bookmark import, CI hooks + Playwright, open-all-links, collapse without rearrange, section select bug fix, true section hiding, version label (v1.5.0)
 - `2026-03-13-module-split.md` — split monolithic script.js into 7 focused modules (tech debt #1)
 - `2026-03-13-dom-test-coverage.md` — DOM rendering tests, all C domains upgraded to A
 - `2026-03-13-test-coverage-expansion.md` — expand automated test coverage across all domains

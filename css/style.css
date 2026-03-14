@@ -233,6 +233,11 @@ h3 {
     align-items: center;
     justify-content: space-between;
     gap: 10px;
+    margin-bottom: 10px;
+}
+
+.section-header h2 {
+    margin: 0;
 }
 
 .section-header-actions {
@@ -651,6 +656,13 @@ button:hover,
     align-self: end;
     grid-column: 2;
     grid-row: 2;
+}
+
+.footer-actions button.has-changes {
+    background: var(--accent);
+    color: #000;
+    border-color: var(--accent);
+    font-weight: 600;
 }
 
 .footer-links {

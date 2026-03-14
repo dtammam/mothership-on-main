@@ -57,6 +57,20 @@ function setupSettings() {
     setupSettingsNav(settingsPanel, settingsNav);
     canRearrangeEditor = () => settingsPanel.classList.contains("open");
 
+    /** Mark the save button as having unsaved changes. */
+    const markDirty = () => {
+        settingsSaveBottom.classList.add("has-changes");
+        settingsSaveBottom.textContent = "Save *";
+    };
+    const clearDirty = () => {
+        settingsSaveBottom.classList.remove("has-changes");
+        settingsSaveBottom.textContent = "Save";
+    };
+
+    // Any input/change inside the settings panel means unsaved work.
+    settingsPanel.addEventListener("input", markDirty);
+    settingsPanel.addEventListener("change", markDirty);
+
     const saveConfig = async (closePanel) => {
         const nextConfig = collectConfigFromEditors();
         const { syncConfig, localAssets } = splitConfig(nextConfig);
@@ -70,6 +84,7 @@ function setupSettings() {
         } else {
             setSyncStatus(`Sync: ${syncResult.error || "error"}`, "warn");
         }
+        clearDirty();
         renderAll(activeConfig);
         if (closePanel) {
             settingsPanel.classList.remove("open");
@@ -88,6 +103,7 @@ function setupSettings() {
         }
         setRearrangeMode(false);
         renderSettings(activeConfig);
+        clearDirty();
         settingsPanel.classList.add("open");
         settingsPanel.setAttribute("aria-hidden", "false");
         updateLinkRowDragState();
@@ -99,7 +115,6 @@ function setupSettings() {
             setRearrangeMode(true);
             return;
         }
-        await persistActiveConfig();
         setRearrangeMode(false);
     });
 
@@ -322,6 +337,7 @@ function setupSettings() {
                 }
                 const preview = previewBookmarkImport(baseConfig, filtered);
                 renderSettings(preview.projectedConfig);
+                markDirty();
                 const { stats } = preview;
                 showImportToast(
                     `Imported ${stats.newLinks} link${stats.newLinks !== 1 ? "s" : ""}` +
@@ -337,6 +353,7 @@ function setupSettings() {
             if (mode === "quotes") {
                 const quotes = normalizeQuotesImport(payload);
                 renderSettings(mergeConfig(baseConfig, { quotes }));
+                markDirty();
                 return;
             }
             if (mode === "search") {
@@ -348,6 +365,7 @@ function setupSettings() {
                     return;
                 }
                 renderSettings(mergeConfig(baseConfig, { search }));
+                markDirty();
                 return;
             }
             if (mode === "links") {
@@ -358,9 +376,11 @@ function setupSettings() {
                     update.sections = sections;
                 }
                 renderSettings(mergeConfig(baseConfig, update));
+                markDirty();
                 return;
             }
             renderSettings(mergeConfig(baseConfig, payload));
+            markDirty();
         } catch (_error) {
             console.error("Invalid config file");
         } finally {
@@ -611,7 +631,14 @@ function setupSettings() {
         const card = event.target.closest(".link-card");
         const dragging = sectionsContainer.querySelector(".link-card.dragging");
         if (card && dragging && card !== dragging && grid.contains(card)) {
-            grid.insertBefore(dragging, card);
+            // Insert before or after depending on pointer position relative to card midpoint.
+            const rect = card.getBoundingClientRect();
+            const midX = rect.left + rect.width / 2;
+            if (event.clientX > midX) {
+                grid.insertBefore(dragging, card.nextSibling);
+            } else {
+                grid.insertBefore(dragging, card);
+            }
         }
     });
 
@@ -1321,7 +1348,9 @@ function refreshDefaultEngineOptions(selectedValue) {
     }
 }
 
+/** Toggle rearrange mode on/off. Exiting auto-persists any drag changes. */
 function setRearrangeMode(enabled) {
+    const wasRearranging = isRearranging;
     isRearranging = enabled;
     const panel = document.getElementById("settings-panel");
     if (panel) {
@@ -1339,6 +1368,9 @@ function setRearrangeMode(enabled) {
     updateEngineRowDragState();
     updateMainDragState();
     if (!enabled) {
+        if (wasRearranging) {
+            persistActiveConfig();
+        }
         renderAll(activeConfig);
     }
 }
