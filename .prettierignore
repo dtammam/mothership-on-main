@@ -2,3 +2,5 @@ node_modules/
 dist/
 *.zip
 *.code-workspace
+test-results/
+playwright-report/

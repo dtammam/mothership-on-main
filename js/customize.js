@@ -183,6 +183,12 @@ function setupSettings() {
             event.target.closest("[data-section-block]")?.remove();
             refreshLinkSectionChoices();
         }
+        if (action === "unhide-section") {
+            const sectionName = event.target.dataset.section;
+            if (sectionName) {
+                toggleSectionHidden(sectionName);
+            }
+        }
     });
 
     if (quickSectionForm && quickSectionInput) {
@@ -287,6 +293,11 @@ function setupSettings() {
         URL.revokeObjectURL(url);
     });
 
+    // Switch file accept type when import mode changes.
+    importConfigMode.addEventListener("change", () => {
+        importConfig.accept = importConfigMode.value === "bookmarks" ? ".html,.htm" : ".json";
+    });
+
     importConfig.addEventListener("change", async (event) => {
         const file = event.target.files?.[0];
         if (!file) {
@@ -294,9 +305,35 @@ function setupSettings() {
         }
         updateFileLabel(importConfigName, [file], "No file selected");
         try {
-            const payload = JSON.parse(await file.text());
-            const baseConfig = collectConfigFromEditors();
             const mode = importConfigMode?.value || "all";
+            const baseConfig = collectConfigFromEditors();
+
+            // Bookmarks mode: parse HTML, let user pick folders, then import.
+            if (mode === "bookmarks") {
+                const html = await file.text();
+                const parsed = parseChromiumBookmarks(html);
+                if (!parsed.ok) {
+                    window.alert(`Bookmark import failed: ${parsed.error}`);
+                    return;
+                }
+                const filtered = await showBookmarkFolderPicker(parsed, baseConfig);
+                if (!filtered) {
+                    return;
+                }
+                const preview = previewBookmarkImport(baseConfig, filtered);
+                renderSettings(preview.projectedConfig);
+                const { stats } = preview;
+                showImportToast(
+                    `Imported ${stats.newLinks} link${stats.newLinks !== 1 ? "s" : ""}` +
+                        (stats.newSections
+                            ? ` in ${stats.newSections} new section${stats.newSections !== 1 ? "s" : ""}`
+                            : "") +
+                        (stats.skippedDuplicates ? ` (${stats.skippedDuplicates} duplicates skipped)` : "")
+                );
+                return;
+            }
+
+            const payload = JSON.parse(await file.text());
             if (mode === "quotes") {
                 const quotes = normalizeQuotesImport(payload);
                 renderSettings(mergeConfig(baseConfig, { quotes }));
@@ -607,15 +644,39 @@ function setupSettings() {
             event.preventDefault();
         }
         if (action === "toggle-section-collapse") {
-            if (!isRearranging) {
-                return;
-            }
             event.preventDefault();
             const sectionName = event.target.dataset.section || event.target.closest(".section")?.dataset.section;
             if (!sectionName) {
                 return;
             }
             toggleSectionCollapsed(sectionName);
+            return;
+        }
+        if (action === "open-all-links") {
+            event.preventDefault();
+            const sectionEl = event.target.closest(".section");
+            if (!sectionEl) {
+                return;
+            }
+            const urls = Array.from(sectionEl.querySelectorAll(".link-card"))
+                .map((card) => card.href)
+                .filter(Boolean);
+            if (!urls.length) {
+                return;
+            }
+            if (urls.length > 5 && !window.confirm(`Open ${urls.length} links in new tabs?`)) {
+                return;
+            }
+            urls.forEach((url) => window.open(url, "_blank"));
+            return;
+        }
+        if (action === "toggle-section-hidden") {
+            event.preventDefault();
+            const sectionName = event.target.dataset.section || event.target.closest(".section")?.dataset.section;
+            if (!sectionName) {
+                return;
+            }
+            toggleSectionHidden(sectionName);
             return;
         }
         if (action === "remove-link-card") {
@@ -718,6 +779,69 @@ function renderSettings(config) {
     renderPrivacyEditor(config.privacy);
     renderBrandingEditor(config.branding);
     renderBackgroundModeEditor(config.backgroundMode);
+    renderHiddenSectionsBar(config.hiddenSections);
+}
+
+// Shows hidden sections with unhide buttons at the bottom of the links editor.
+function renderHiddenSectionsBar(hiddenSections) {
+    const container = document.getElementById("links-editor");
+    if (!container) {
+        return;
+    }
+    const existing = container.querySelector(".hidden-sections-bar");
+    if (existing) {
+        existing.remove();
+    }
+    const hidden = Array.isArray(hiddenSections) ? hiddenSections.filter(Boolean) : [];
+    if (!hidden.length) {
+        updateHiddenNavPill(0);
+        return;
+    }
+    const bar = document.createElement("div");
+    bar.className = "hidden-sections-bar";
+    bar.id = "settings-hidden";
+    const label = document.createElement("span");
+    label.className = "hidden-sections-label";
+    label.textContent = "Hidden sections:";
+    bar.appendChild(label);
+    hidden.forEach((name) => {
+        const badge = document.createElement("button");
+        badge.type = "button";
+        badge.className = "hidden-section-badge";
+        badge.dataset.action = "unhide-section";
+        badge.dataset.section = name;
+        badge.textContent = `${name} (unhide)`;
+        bar.appendChild(badge);
+    });
+    container.appendChild(bar);
+
+    // Add/update "Hidden" nav pill in settings nav.
+    updateHiddenNavPill(hidden.length);
+}
+
+// Adds or removes a "Hidden (N)" pill in the settings nav bar.
+function updateHiddenNavPill(count) {
+    const nav = document.querySelector(".settings-nav");
+    if (!nav) {
+        return;
+    }
+    const existing = nav.querySelector('[data-nav="hidden"]');
+    if (!count) {
+        if (existing) {
+            existing.remove();
+        }
+        return;
+    }
+    if (existing) {
+        existing.textContent = `Hidden (${count})`;
+        return;
+    }
+    const actionsSpan = nav.querySelector(".settings-nav-actions");
+    const pill = document.createElement("a");
+    pill.href = "#settings-hidden";
+    pill.dataset.nav = "hidden";
+    pill.textContent = `Hidden (${count})`;
+    nav.insertBefore(pill, actionsSpan);
 }
 
 function renderLinksEditor(links, sectionsOverride) {
@@ -889,6 +1013,7 @@ function setLinkRowSectionValue(row, sectionName) {
     }
 }
 
+// Moves a link row to the target section list and scrolls it into view.
 function moveLinkRowToSection(row, sectionName) {
     const resolvedSection = (sectionName || "").trim() || DEFAULT_LINK_SECTION;
     ensureLinksSection(resolvedSection);
@@ -898,6 +1023,14 @@ function moveLinkRowToSection(row, sectionName) {
         targetList.appendChild(row);
     }
     setLinkRowSectionValue(row, resolvedSection);
+    // Brief highlight so the user can spot the moved row, then scroll to it.
+    row.style.outline = "2px solid var(--accent)";
+    row.style.outlineOffset = "2px";
+    setTimeout(() => {
+        row.style.outline = "";
+        row.style.outlineOffset = "";
+    }, 1500);
+    row.scrollIntoView({ block: "center", behavior: "smooth" });
 }
 
 function handleLinkSectionSelection(selectInput) {
@@ -1241,9 +1374,37 @@ function updateMainDragState() {
 }
 
 async function persistActiveConfig() {
-    const nextLinks = collectLinksFromMain();
-    const nextSections = collectSectionsFromMain();
+    const visibleLinks = collectLinksFromMain();
+    const visibleSections = collectSectionsFromMain();
     const nextCollapsedSections = collectCollapsedSectionsFromMain();
+
+    // Merge visible DOM order with hidden sections to preserve full section list.
+    // Hidden sections aren't in the DOM, so we reinsert them at their original position.
+    const hiddenSet = new Set(Array.isArray(activeConfig?.hiddenSections) ? activeConfig.hiddenSections : []);
+    const prevSections = Array.isArray(activeConfig?.sections) ? activeConfig.sections : [];
+    const nextSections = [];
+    const usedVisible = new Set();
+    let visibleIdx = 0;
+    for (const section of prevSections) {
+        if (hiddenSet.has(section)) {
+            nextSections.push(section);
+        } else if (visibleIdx < visibleSections.length) {
+            nextSections.push(visibleSections[visibleIdx]);
+            usedVisible.add(visibleSections[visibleIdx]);
+            visibleIdx++;
+        }
+    }
+    // Append any new visible sections not in the previous list.
+    for (; visibleIdx < visibleSections.length; visibleIdx++) {
+        if (!usedVisible.has(visibleSections[visibleIdx])) {
+            nextSections.push(visibleSections[visibleIdx]);
+        }
+    }
+
+    // Preserve links belonging to hidden sections — they aren't in the DOM.
+    const hiddenLinks = (activeConfig?.links || []).filter((l) => hiddenSet.has(l.section));
+    const nextLinks = [...visibleLinks, ...hiddenLinks];
+
     if (nextLinks.length) {
         activeConfig = {
             ...activeConfig,
@@ -1286,6 +1447,192 @@ async function toggleSectionCollapsed(sectionName) {
     applyVisibility(activeConfig.visibility);
     updateGridColumns(activeConfig.layout);
     await persistActiveConfig();
+}
+
+// Toggles a section's hidden state and persists the change.
+async function toggleSectionHidden(sectionName) {
+    if (!sectionName) {
+        return;
+    }
+    const hidden = new Set(Array.isArray(activeConfig?.hiddenSections) ? activeConfig.hiddenSections : []);
+    if (hidden.has(sectionName)) {
+        hidden.delete(sectionName);
+    } else {
+        hidden.add(sectionName);
+    }
+    activeConfig = {
+        ...activeConfig,
+        hiddenSections: Array.from(hidden)
+    };
+    renderSections(activeConfig);
+    applyVisibility(activeConfig.visibility);
+    updateGridColumns(activeConfig.layout);
+    renderHiddenSectionsBar(activeConfig.hiddenSections);
+    await persistActiveConfig();
+}
+
+/** Show a modal letting the user pick which bookmark folders to import. Returns filtered parsed bookmarks or null if cancelled. */
+function showBookmarkFolderPicker(parsed, existingConfig) {
+    return new Promise((resolve) => {
+        // Build per-folder link counts.
+        const folderCounts = new Map();
+        for (const link of parsed.links) {
+            folderCounts.set(link.section, (folderCounts.get(link.section) || 0) + 1);
+        }
+        const folders = parsed.sections.length ? parsed.sections : [...folderCounts.keys()];
+
+        // Track which folders are selected (all on by default).
+        const selected = new Set(folders);
+
+        // ── Build DOM ──
+        const overlay = document.createElement("div");
+        overlay.className = "bookmark-picker-overlay";
+
+        const panel = document.createElement("div");
+        panel.className = "bookmark-picker";
+
+        const heading = document.createElement("h3");
+        heading.textContent = "Select folders to import";
+
+        const info = document.createElement("div");
+        info.className = "bookmark-picker-info";
+        info.textContent = `${parsed.links.length} bookmarks in ${folders.length} folders`;
+
+        const list = document.createElement("div");
+        list.className = "bookmark-picker-list";
+
+        const checkboxes = [];
+        for (const folder of folders) {
+            const row = document.createElement("label");
+            row.className = "bookmark-picker-row";
+
+            const cb = document.createElement("input");
+            cb.type = "checkbox";
+            cb.checked = true;
+            cb.dataset.folder = folder;
+            checkboxes.push(cb);
+
+            const name = document.createElement("span");
+            name.className = "folder-name";
+            name.textContent = folder;
+
+            const count = document.createElement("span");
+            count.className = "folder-count";
+            const n = folderCounts.get(folder) || 0;
+            count.textContent = `${n} link${n !== 1 ? "s" : ""}`;
+
+            row.appendChild(cb);
+            row.appendChild(name);
+            row.appendChild(count);
+            list.appendChild(row);
+        }
+
+        const footer = document.createElement("div");
+        footer.className = "bookmark-picker-footer";
+
+        const quota = document.createElement("div");
+        quota.className = "bookmark-picker-quota";
+
+        const actions = document.createElement("div");
+        actions.className = "bookmark-picker-actions";
+
+        const cancelBtn = document.createElement("button");
+        cancelBtn.type = "button";
+        cancelBtn.textContent = "Cancel";
+
+        const confirmBtn = document.createElement("button");
+        confirmBtn.type = "button";
+        confirmBtn.className = "picker-confirm";
+        confirmBtn.textContent = "Import selected";
+
+        actions.appendChild(cancelBtn);
+        actions.appendChild(confirmBtn);
+        footer.appendChild(quota);
+        footer.appendChild(actions);
+
+        panel.appendChild(heading);
+        panel.appendChild(info);
+        panel.appendChild(list);
+        panel.appendChild(footer);
+        overlay.appendChild(panel);
+
+        // ── Quota feedback ──
+        function updateQuota() {
+            const filtered = filterParsedByFolders(parsed, selected);
+            const preview = previewBookmarkImport(existingConfig, filtered);
+            const { stats } = preview;
+            const projKB = (stats.projectedBytes / 1024).toFixed(1);
+            const maxKB = (stats.quotaBytes / 1024).toFixed(0);
+            const linkCount = stats.newLinks;
+            quota.textContent = `${linkCount} new links · ${projKB} / ${maxKB} KB`;
+            const over = stats.overQuota;
+            quota.classList.toggle("over-quota", over);
+            confirmBtn.disabled = over || selected.size === 0;
+            if (over) {
+                quota.textContent += " — over quota";
+            }
+        }
+
+        updateQuota();
+
+        // ── Events ──
+        for (const cb of checkboxes) {
+            cb.addEventListener("change", () => {
+                if (cb.checked) {
+                    selected.add(cb.dataset.folder);
+                } else {
+                    selected.delete(cb.dataset.folder);
+                }
+                updateQuota();
+            });
+        }
+
+        function cleanup(result) {
+            overlay.remove();
+            resolve(result);
+        }
+
+        cancelBtn.addEventListener("click", () => cleanup(null));
+        overlay.addEventListener("click", (e) => {
+            if (e.target === overlay) {
+                cleanup(null);
+            }
+        });
+        confirmBtn.addEventListener("click", () => {
+            cleanup(filterParsedByFolders(parsed, selected));
+        });
+
+        document.body.appendChild(overlay);
+    });
+}
+
+/** Filter parsed bookmarks to only include links in the given folder set. */
+function filterParsedByFolders(parsed, folderSet) {
+    return {
+        ok: true,
+        sections: parsed.sections.filter((s) => folderSet.has(s)),
+        links: parsed.links.filter((l) => folderSet.has(l.section))
+    };
+}
+
+/** Show a brief success toast inside the settings panel. */
+function showImportToast(message, duration = 4000) {
+    const panel = document.querySelector(".settings-panel");
+    if (!panel) {
+        return;
+    }
+    const toast = document.createElement("div");
+    toast.className = "import-toast";
+    toast.textContent = message;
+    panel.prepend(toast);
+    // Trigger enter animation on next frame.
+    requestAnimationFrame(() => {
+        toast.classList.add("visible");
+    });
+    setTimeout(() => {
+        toast.classList.remove("visible");
+        toast.addEventListener("transitionend", () => toast.remove(), { once: true });
+    }, duration);
 }
 
 function updateFileLabel(labelEl, files, emptyLabel) {

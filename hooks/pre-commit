@@ -36,8 +36,12 @@ if [ -d "node_modules" ]; then
   echo "Checking formatting..."
   npx prettier --check "**/*.{js,json,md,yml,yaml,css,html}"
   echo "  ✓ format check passed"
+
+  echo "Running unit tests..."
+  npx vitest run
+  echo "  ✓ unit tests passed"
 else
-  echo "  ⚠ node_modules not found — skipping lint and format (run npm install)"
+  echo "  ⚠ node_modules not found — skipping lint, format, and tests (run npm install)"
 fi
 
 echo "=== pre-commit passed ==="

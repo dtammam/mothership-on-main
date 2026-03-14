@@ -61,19 +61,20 @@ mothership-on-main/
 
 The extension's behavior is driven by a single configuration object. The default shape is defined in `config.json`:
 
-| Field               | Type     | Purpose                                              |
-| ------------------- | -------- | ---------------------------------------------------- |
-| `branding`          | object   | Title, subtitle, quotes heading                      |
-| `sections`          | string[] | Ordered list of link section names                   |
-| `links`             | object[] | Links with section, name, url, iconOverride          |
-| `quotes`            | string[] | Rotating quotes shown on page load                   |
-| `backgroundMode`    | string   | `"gradient_signature"`, `"image"`, etc.              |
-| `backgrounds`       | array    | User-uploaded background images (base64)             |
-| `layout`            | object   | Column count, card width, page width, resizable flag |
-| `visibility`        | object   | Toggle search, quotes, links sections                |
-| `privacy`           | object   | Favicon auto-fetch toggle                            |
-| `collapsedSections` | string[] | Sections collapsed by user                           |
-| `search`            | object   | Default engine ID + array of engine definitions      |
+| Field               | Type     | Purpose                                                   |
+| ------------------- | -------- | --------------------------------------------------------- |
+| `branding`          | object   | Title, subtitle, quotes heading                           |
+| `sections`          | string[] | Ordered list of link section names                        |
+| `links`             | object[] | Links with section, name, url, iconOverride               |
+| `quotes`            | string[] | Rotating quotes shown on page load                        |
+| `backgroundMode`    | string   | `"gradient_signature"`, `"image"`, etc.                   |
+| `backgrounds`       | array    | User-uploaded background images (base64)                  |
+| `layout`            | object   | Column count, card width, page width, resizable flag      |
+| `visibility`        | object   | Toggle search, quotes, links sections                     |
+| `privacy`           | object   | Favicon auto-fetch toggle                                 |
+| `collapsedSections` | string[] | Sections collapsed by user                                |
+| `hiddenSections`    | string[] | Sections hidden from the main page (editable in settings) |
+| `search`            | object   | Default engine ID + array of engine definitions           |
 
 ## Storage architecture (v2: chunked config)
 

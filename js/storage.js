@@ -368,9 +368,10 @@ async function cleanupTempV2Keys(meta) {
     }
 }
 
-// Saves using two-phase temp→final writes with per-item/total quota preflight.
+// Saves v2 config with quota preflight. Uses two-phase temp→final writes
+// when payload is small enough, or direct write for large payloads to avoid
+// exceeding total quota (temp + final keys coexist during two-phase writes).
 async function saveSyncConfigV2(syncConfig, options = {}) {
-    // Two-phase write: temp -> final, with quota preflight on both; legacy keys cleaned post-success.
     const _opts = { silent: false, ...options };
     const serialized = JSON.stringify(syncConfig ?? {});
     const chunks = chunkStringBySize(serialized, SYNC_CHUNK_CHAR_TARGET);
@@ -380,13 +381,6 @@ async function saveSyncConfigV2(syncConfig, options = {}) {
         updatedAt: new Date().toISOString(),
         checksum: hashString(serialized)
     };
-    const tempPayload = {
-        [V2_TMP_META_KEY]: meta,
-        ...chunks.reduce((acc, chunk, index) => {
-            acc[`${V2_TMP_CHUNK_PREFIX}${padChunkIndex(index)}`] = chunk;
-            return acc;
-        }, {})
-    };
     const finalPayload = {
         [V2_META_KEY]: meta,
         ...chunks.reduce((acc, chunk, index) => {
@@ -395,10 +389,6 @@ async function saveSyncConfigV2(syncConfig, options = {}) {
         }, {})
     };
 
-    const tempCheck = preflightV2Payload(tempPayload);
-    if (!tempCheck.ok) {
-        return { ok: false, error: tempCheck.error };
-    }
     const finalCheck = preflightV2Payload(finalPayload);
     if (!finalCheck.ok) {
         return { ok: false, error: finalCheck.error };
@@ -413,33 +403,58 @@ async function saveSyncConfigV2(syncConfig, options = {}) {
           ]
         : [];
 
-    try {
-        await storageSync.set(tempPayload);
-    } catch (error) {
-        return { ok: false, error: error?.message || "Failed to write temp config" };
-    }
+    // Two-phase write is only safe when payload uses less than half the quota;
+    // otherwise temp + final keys coexist and exceed Chrome's total sync quota.
+    const useTwoPhase = finalCheck.totalBytes < SYNC_TOTAL_QUOTA_BYTES / 2;
 
-    try {
-        if (chrome?.storage?.sync) {
-            await new Promise((resolve, reject) => {
-                chrome.storage.sync.set(finalPayload, () => {
-                    const err = chrome.runtime?.lastError;
-                    if (err) {
-                        reject(new Error(err.message));
-                        return;
-                    }
-                    resolve();
-                });
-            });
-        } else {
-            await storageSync.set(finalPayload);
+    if (useTwoPhase) {
+        const tempPayload = {
+            [V2_TMP_META_KEY]: meta,
+            ...chunks.reduce((acc, chunk, index) => {
+                acc[`${V2_TMP_CHUNK_PREFIX}${padChunkIndex(index)}`] = chunk;
+                return acc;
+            }, {})
+        };
+        try {
+            await storageSync.set(tempPayload);
+        } catch (error) {
+            return { ok: false, error: error?.message || "Failed to write temp config" };
         }
-    } catch (error) {
+        try {
+            await storageSync.set(finalPayload);
+        } catch (error) {
+            await cleanupTempV2Keys(meta);
+            return { ok: false, error: error?.message || "Failed to write final config" };
+        }
         await cleanupTempV2Keys(meta);
-        return { ok: false, error: error?.message || "Failed to write final config" };
+    } else {
+        // Large payload: clear old keys first, then write directly.
+        // Brief window with no sync data, but avoids quota overflow.
+        const oldMeta = (await storageSync.get(V2_META_KEY))[V2_META_KEY];
+        const oldChunkKeys = oldMeta ? buildV2ChunkKeys(oldMeta.chunkCount || 0) : [];
+        const staleKeys = [
+            V2_META_KEY,
+            V2_TMP_META_KEY,
+            SYNC_KEY,
+            SYNC_CORE_KEY,
+            SYNC_INDEX_KEY,
+            ...oldChunkKeys,
+            ...buildV2ChunkKeys(oldMeta?.chunkCount || 0, V2_TMP_CHUNK_PREFIX),
+            ...legacyChunkKeys
+        ];
+        try {
+            await storageSync.remove(staleKeys);
+        } catch (error) {
+            console.warn("Failed to clear old keys before large write", error);
+        }
+        try {
+            await storageSync.set(finalPayload);
+        } catch (error) {
+            return { ok: false, error: error?.message || "Failed to write config" };
+        }
+        return { ok: true, meta };
     }
 
-    await cleanupTempV2Keys(meta);
     await storageSync.remove([SYNC_KEY, SYNC_CORE_KEY, SYNC_INDEX_KEY, ...legacyChunkKeys]);
     return { ok: true, meta };
 }

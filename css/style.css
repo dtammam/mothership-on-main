@@ -288,8 +288,83 @@ h3 {
     pointer-events: auto;
 }
 
+.section-open-all {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--muted);
+    cursor: pointer;
+    margin-right: auto;
+}
+
+.section-open-all:hover {
+    border-color: var(--accent);
+    color: var(--text);
+}
+
+.section-hide {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--muted);
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.section-hide:hover {
+    border-color: var(--accent);
+    color: var(--text);
+}
+
+.rearrange-mode .section-hide {
+    opacity: 1;
+    pointer-events: auto;
+}
+
 .section.is-collapsed .links-grid {
     display: none;
+}
+
+.hidden-sections-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 12px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    margin-top: 12px;
+    scroll-margin-top: var(--settings-nav-offset, 72px);
+}
+
+.hidden-sections-label {
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+}
+
+.hidden-section-badge {
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--muted);
+    cursor: pointer;
+}
+
+.hidden-section-badge:hover {
+    border-color: var(--accent);
+    color: var(--text);
 }
 
 .section.dragging {
@@ -628,6 +703,13 @@ button:hover,
     font-size: 12px;
     letter-spacing: 0.04em;
     color: var(--muted);
+}
+
+.version-label {
+    display: block;
+    margin-top: 4px;
+    font-size: 11px;
+    opacity: 0.6;
 }
 
 .sync-row {
@@ -1114,4 +1196,145 @@ textarea {
         flex-direction: column;
         align-items: stretch;
     }
+}
+
+/* ── Bookmark folder picker modal ── */
+.bookmark-picker-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bookmark-picker {
+    background: rgba(12, 14, 22, 0.97);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 24px;
+    width: min(480px, 90vw);
+    max-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.bookmark-picker h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: var(--text);
+}
+
+.bookmark-picker-info {
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+
+.bookmark-picker-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    overflow-y: auto;
+    max-height: 40vh;
+    padding-right: 4px;
+}
+
+.bookmark-picker-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: var(--radius-tight);
+    background: var(--surface);
+    cursor: pointer;
+}
+
+.bookmark-picker-row:hover {
+    background: var(--surface-bright);
+}
+
+.bookmark-picker-row input[type="checkbox"] {
+    accent-color: var(--accent);
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.bookmark-picker-row .folder-name {
+    flex: 1;
+    color: var(--text);
+    font-size: 0.9rem;
+}
+
+.bookmark-picker-row .folder-count {
+    color: var(--muted);
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+.bookmark-picker-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.bookmark-picker-quota {
+    font-size: 0.8rem;
+    color: var(--muted);
+    flex: 1;
+}
+
+.bookmark-picker-quota.over-quota {
+    color: #ff6b6b;
+}
+
+.bookmark-picker-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.bookmark-picker-actions button {
+    padding: 8px 16px;
+    font-size: 0.85rem;
+}
+
+.bookmark-picker-actions .picker-confirm {
+    background: var(--accent);
+    color: #000;
+    border-color: var(--accent);
+    font-weight: 600;
+}
+
+.bookmark-picker-actions .picker-confirm:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* ── Import success toast ── */
+.import-toast {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--accent);
+    color: #000;
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: center;
+    padding: 10px 16px;
+    border-radius: 0 0 var(--radius-tight) var(--radius-tight);
+    opacity: 0;
+    transform: translateY(-100%);
+    transition:
+        opacity 0.3s ease,
+        transform 0.3s ease;
+}
+
+.import-toast.visible {
+    opacity: 1;
+    transform: translateY(0);
 }

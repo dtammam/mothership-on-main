@@ -10,10 +10,13 @@
         "format": "prettier --write \"**/*.{js,json,md,yml,yaml,css,html}\"",
         "test": "vitest run",
         "test:watch": "vitest",
-        "test:coverage": "vitest run --coverage"
+        "test:coverage": "vitest run --coverage",
+        "test:e2e": "playwright test",
+        "test:e2e:install": "playwright install chromium"
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
+        "@playwright/test": "^1.58.2",
         "eslint": "^10.0.3",
         "prettier": "^3.8.1",
         "vitest": "^4.1.0"

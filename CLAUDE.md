@@ -109,7 +109,8 @@ pwsh scripts/package-edge.ps1
 
 Active plans currently in progress:
 
-- `2026-03-13-test-and-debt-sweep.md` — test coverage for Search/Customize/Drag domains + FOUC fix + cross-platform scripts
+- `2026-03-14-feature-batch.md` — 7 features: bookmark import, CI hooks + Playwright, open-all-links, collapse without rearrange, section select bug fix, true section hiding, version label
+- `2026-03-14-design-system.md` — design system: tokenize all colors, eliminate hardcoded values, light mode, gradient-aware theming (future, not started)
 
 Completed plans:
 
@@ -117,6 +118,7 @@ Completed plans:
 - `2026-03-13-dom-test-coverage.md` — DOM rendering tests, all C domains upgraded to A
 - `2026-03-13-test-coverage-expansion.md` — expand automated test coverage across all domains
 - `2026-03-13-testing-and-linting-infrastructure.md` — establish test runner, linter, and formatter
+- `2026-03-13-test-and-debt-sweep.md` — test coverage for Search/Customize/Drag domains + FOUC fix + cross-platform scripts
 
 Append to the progress log (dated, append-only) when making meaningful advances on a plan.
 Do not rewrite or summarize away prior log entries.

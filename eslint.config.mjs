@@ -30,6 +30,7 @@ export default [
                 MutationObserver: "readonly",
                 ResizeObserver: "readonly",
                 IntersectionObserver: "readonly",
+                DOMParser: "readonly",
                 performance: "readonly",
                 crypto: "readonly",
                 structuredClone: "readonly",
@@ -109,6 +110,8 @@ export default [
                 applyLocalAssets: "readonly",
                 mergeLocalAssets: "readonly",
                 normalizeQuotesImport: "readonly",
+                parseChromiumBookmarks: "readonly",
+                previewBookmarkImport: "readonly",
                 deriveSections: "readonly",
                 collectConfigFromEditors: "readonly",
                 collectLinks: "readonly",
@@ -160,6 +163,9 @@ export default [
                 queueBackgroundPreview: "readonly",
                 getBackgroundThumb: "readonly",
                 getBackgroundThumbKey: "readonly",
+                toggleSectionHidden: "readonly",
+                renderHiddenSectionsBar: "readonly",
+                updateHiddenNavPill: "readonly",
                 updateFileLabel: "readonly",
                 // render.js (will be extracted in phase 5)
                 renderAll: "readonly",
@@ -241,6 +247,6 @@ export default [
         }
     },
     {
-        ignores: ["node_modules/", "dist/", "tests/storage-harness*.js"]
+        ignores: ["node_modules/", "dist/", "tests/storage-harness*.js", "tests/e2e/**", "playwright.config.js"]
     }
 ];

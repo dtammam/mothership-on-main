@@ -64,6 +64,11 @@ function mergeConfig(base, override) {
                     )
                 ]
               : [],
+        hiddenSections: Array.isArray(override.hiddenSections)
+            ? [...new Set(override.hiddenSections.filter((name) => typeof name === "string" && name.trim().length > 0))]
+            : Array.isArray(base.hiddenSections)
+              ? [...new Set(base.hiddenSections.filter((name) => typeof name === "string" && name.trim().length > 0))]
+              : [],
         search: {
             defaultEngine: override.search?.defaultEngine || base.search.defaultEngine,
             engines: Array.isArray(override.search?.engines) ? override.search.engines : base.search.engines
@@ -157,6 +162,137 @@ function normalizeQuotesImport(payload) {
     return [];
 }
 
+// Parses a Chromium bookmark HTML export (Netscape Bookmark File Format).
+// Returns { ok, sections, links } on success or { ok, error } on failure.
+function parseChromiumBookmarks(html) {
+    if (!html || typeof html !== "string") {
+        return { ok: false, error: "Invalid bookmark file: expected HTML string" };
+    }
+    if (!html.includes("<!DOCTYPE NETSCAPE-Bookmark-file-1>") && !html.includes("<DL>")) {
+        return { ok: false, error: "Not a valid Netscape bookmark file" };
+    }
+    const sections = [];
+    const links = [];
+    const sectionSeen = new Set();
+    const NAME_MAX = 100;
+
+    // Use DOMParser to walk the bookmark <DL> tree.
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+
+    function walkDL(dl, sectionName) {
+        if (!dl) {
+            return;
+        }
+        const items = dl.children;
+        for (let i = 0; i < items.length; i++) {
+            const dt = items[i];
+            if (dt.tagName !== "DT") {
+                continue;
+            }
+            const heading = dt.querySelector(":scope > H3");
+            if (heading) {
+                // Folder — the next sibling DL holds its children.
+                const folderName = (heading.textContent || "").trim().slice(0, NAME_MAX) || DEFAULT_LINK_SECTION;
+                if (!sectionSeen.has(folderName)) {
+                    sectionSeen.add(folderName);
+                    sections.push(folderName);
+                }
+                const childDL = dt.querySelector(":scope > DL");
+                walkDL(childDL, folderName);
+                continue;
+            }
+            const anchor = dt.querySelector(":scope > A");
+            if (anchor && anchor.href) {
+                const url = anchor.href.trim();
+                if (!url || url === "about:blank") {
+                    continue;
+                }
+                const name = (anchor.textContent || url).trim().slice(0, NAME_MAX);
+                const section = sectionName || DEFAULT_LINK_SECTION;
+                if (!sectionSeen.has(section)) {
+                    sectionSeen.add(section);
+                    sections.push(section);
+                }
+                links.push({
+                    id: createId(),
+                    name,
+                    url,
+                    section,
+                    iconOverride: ""
+                });
+            }
+        }
+    }
+
+    // The top-level <DL> contains the bookmark roots.
+    const topDL = doc.querySelector("DL");
+    walkDL(topDL, null);
+
+    if (!links.length) {
+        return { ok: false, error: "No bookmarks found in file" };
+    }
+
+    // Deduplicate links by URL within each section.
+    const seen = new Set();
+    const dedupedLinks = links.filter((link) => {
+        const key = `${link.section}|${link.url}`;
+        if (seen.has(key)) {
+            return false;
+        }
+        seen.add(key);
+        return true;
+    });
+
+    return { ok: true, sections, links: dedupedLinks };
+}
+
+// Previews a bookmark import by merging into existing config without side effects.
+// Returns { projectedConfig, stats } with byte estimates for quota checking.
+function previewBookmarkImport(existingConfig, parsedBookmarks) {
+    const config = structuredClone(existingConfig);
+    const existingUrls = new Set((config.links || []).map((link) => link.url));
+    let skippedDuplicates = 0;
+    const newLinks = [];
+    parsedBookmarks.links.forEach((link) => {
+        if (existingUrls.has(link.url)) {
+            skippedDuplicates++;
+            return;
+        }
+        existingUrls.add(link.url);
+        newLinks.push(link);
+    });
+
+    config.links = [...(config.links || []), ...newLinks];
+
+    // Merge sections preserving existing order.
+    const existingSections = new Set(config.sections || []);
+    const newSections = [];
+    parsedBookmarks.sections.forEach((section) => {
+        if (!existingSections.has(section)) {
+            existingSections.add(section);
+            newSections.push(section);
+        }
+    });
+    config.sections = [...(config.sections || []), ...newSections];
+
+    const currentEstimate = estimateSyncUsage(existingConfig);
+    const projectedEstimate = estimateSyncUsage(config);
+
+    return {
+        projectedConfig: config,
+        stats: {
+            newLinks: newLinks.length,
+            newSections: newSections.length,
+            currentBytes: currentEstimate.totalBytes,
+            projectedBytes: projectedEstimate.totalBytes,
+            quotaBytes: SYNC_TOTAL_QUOTA_BYTES,
+            overQuota: projectedEstimate.totalBytes > SYNC_TOTAL_QUOTA_BYTES,
+            skippedDuplicates
+        }
+    };
+}
+
 function deriveSections(links, existingSections) {
     const ordered = [];
     const seen = new Set();
@@ -201,6 +337,7 @@ function collectConfigFromEditors() {
         visibility,
         privacy,
         collapsedSections: collectCollapsedSectionsFromMain(),
+        hiddenSections: activeConfig?.hiddenSections || [],
         search
     };
 }

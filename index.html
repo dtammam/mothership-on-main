@@ -92,6 +92,7 @@
                             <option value="quotes">Import quotes</option>
                             <option value="search">Import searches</option>
                             <option value="links">Import links</option>
+                            <option value="bookmarks">Import Chromium bookmarks</option>
                         </select>
                     </label>
                     <label class="file-field">
@@ -229,7 +230,10 @@
                 </div>
             </div>
             <div class="settings-footer">
-                <div class="footer-credit">New-tab productivity, built by Dean with AI.</div>
+                <div class="footer-credit">
+                    New-tab productivity, built by Dean with AI.
+                    <span id="version-label" class="version-label"></span>
+                </div>
                 <div class="footer-links">
                     <a class="footer-link" href="https://deantammam.substack.com/" aria-label="Substack">
                         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -247,10 +251,10 @@
                             />
                         </svg>
                     </a>
-                    <a class="footer-link" href="https://chatgpt.com/features/codex" aria-label="OpenAI">
+                    <a class="footer-link" href="https://github.com/dtammam/mothership-on-main/" aria-label="GitHub">
                         <svg viewBox="0 0 24 24" aria-hidden="true">
                             <path
-                                d="M22.27 8.81a4.9 4.9 0 0 0-2.1-2.1 5.03 5.03 0 0 0 .16-2.33 5.12 5.12 0 0 0-7.07-1.87 5.03 5.03 0 0 0-2.33-.16 4.9 4.9 0 0 0-2.1-2.1 5.12 5.12 0 0 0-7.07 7.07 4.9 4.9 0 0 0 2.1 2.1 5.03 5.03 0 0 0-.16 2.33 5.12 5.12 0 0 0 7.07 1.87 5.03 5.03 0 0 0 2.33.16 4.9 4.9 0 0 0 2.1 2.1 5.12 5.12 0 0 0 7.07-7.07 4.9 4.9 0 0 0-2.1-2.1 5.03 5.03 0 0 0 .16-2.33zM12 7.02a2.98 2.98 0 0 1 2.58 1.5 2.97 2.97 0 0 1-1.1 4.08 2.98 2.98 0 0 1-4.08-1.1 2.97 2.97 0 0 1 1.1-4.08A2.98 2.98 0 0 1 12 7.02z"
+                                d="M12 2C6.48 2 2 6.48 2 12c0 4.42 3.01 8.16 7.19 9.49.53.1.72-.23.72-.5 0-.25-.01-1.07-.01-1.93-2.69.5-3.37-.65-3.58-1.25-.12-.31-.64-1.25-1.1-1.5-.37-.2-.91-.7-.01-.71.85-.01 1.45.78 1.65 1.1.97 1.63 2.51 1.17 3.13.89.1-.7.37-1.17.68-1.44-2.38-.27-4.88-1.19-4.88-5.29 0-1.17.42-2.13 1.1-2.88-.11-.27-.48-1.36.1-2.84 0 0 .9-.29 2.95 1.1a10.07 10.07 0 0 1 2.68-.36c.91 0 1.82.12 2.68.36 2.05-1.39 2.95-1.1 2.95-1.1.58 1.48.21 2.57.1 2.84.68.75 1.1 1.71 1.1 2.88 0 4.11-2.5 5.02-4.89 5.29.39.33.73.98.73 1.98 0 1.43-.01 2.58-.01 2.94 0 .27.19.61.73.5A10.01 10.01 0 0 0 22 12c0-5.52-4.48-10-10-10z"
                             />
                         </svg>
                     </a>

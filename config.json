@@ -33,6 +33,7 @@
         "autoFetchFavicons": true
     },
     "collapsedSections": [],
+    "hiddenSections": [],
     "search": {
         "defaultEngine": "google",
         "engines": [
