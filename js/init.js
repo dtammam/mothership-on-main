@@ -1,6 +1,7 @@
 // Entry point: global mutable state, initialization, and public API exports.
 // Loaded last — depends on all other modules.
 
+/* eslint-disable prefer-const -- these are reassigned in other modules (concatenated at runtime) */
 let activeConfig = null;
 let faviconCache = {};
 let backgroundThumbs = {};
@@ -12,6 +13,7 @@ let currentDragSection = null;
 let backgroundPreviewObserver = null;
 let backgroundPreviewPanel = null;
 let canRearrangeEditor = () => false;
+/* eslint-enable prefer-const */
 
 if (!window.__MSOM_DISABLE_UI__) {
     document.addEventListener("DOMContentLoaded", () => {
@@ -36,6 +38,9 @@ async function init() {
     setupSettings();
     refreshSyncStatus();
     setupGridObserver();
+
+    // Reveal page now that user config is rendered (prevents FOUC).
+    document.body.classList.remove("loading");
 }
 
 window.mothershipDebug = {

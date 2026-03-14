@@ -1,7 +1,7 @@
 # Execution Plan: Test Coverage + Tech Debt Sweep
 
 **Created:** 2026-03-13
-**Status:** Not started
+**Status:** Complete
 
 ## Goal
 
@@ -134,6 +134,12 @@ Add `tests/drag-reorder.test.js`:
 (append-only, dated)
 
 - 2026-03-13: Plan created.
+- 2026-03-14: Phase 1 complete — 22 Search domain tests added (renderSearch, collectSearch, renderSearchEditor, addEngineRow, refreshDefaultEngineOptions). Search C→A.
+- 2026-03-14: Phase 2 complete — 37 Customize panel editor tests added (renderSettings, renderLinksEditor, renderBackgroundsEditor, renderQuotesEditor, renderLayoutEditor, updateLayoutControlState, renderVisibilityEditor, renderPrivacyEditor, renderBrandingEditor, renderBackgroundModeEditor, createLinksSection, ensureLinksSection, link section management). Customize panel D→A.
+- 2026-03-14: Phase 3 complete — 16 Drag & reorder tests added (findReorderTarget, setRearrangeMode, updateLinkRowDragState, updateEngineRowDragState, updateMainDragState, FOUC prevention test). Drag & reorder D→A.
+- 2026-03-14: Phase 4 complete — FOUC fix: body.loading class (opacity: 0) in CSS + init() removes loading class after renderAll(). Tech debt #4 closed.
+- 2026-03-14: Phase 5 complete — Added scripts/package-edge.sh and scripts/build-release-body.sh (bash equivalents of PowerShell scripts). Tech debt #5 closed.
+- 2026-03-14: Phase 6 complete — Updated QUALITY_SCORE.md (all 8 domains A), closed tech debt #4 and #5 in tracker, updated PROGRESS.md. 267 tests total, all passing.
 
 ## Decision log
 

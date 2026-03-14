@@ -91,6 +91,16 @@ export function loadScript(options = {}) {
             set onerror(_v) {}
         },
         Boolean,
+        addEventListener() {},
+        confirm() {
+            return false;
+        },
+        alert() {},
+        requestAnimationFrame(cb) {
+            cb();
+            return 0;
+        },
+        cancelAnimationFrame() {},
         __MSOM_DISABLE_UI__: true
     };
 
