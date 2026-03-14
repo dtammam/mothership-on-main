@@ -142,6 +142,7 @@ function renderSections(config) {
 
     const sections = deriveSections(config.links, config.sections);
     const collapsedSections = new Set(Array.isArray(config.collapsedSections) ? config.collapsedSections : []);
+    const hiddenSections = new Set(Array.isArray(config.hiddenSections) ? config.hiddenSections : []);
     lastRenderLinks = ensureLinkIds(config.links || []);
     const linksBySection = new Map();
     sections.forEach((section) => linksBySection.set(section, []));
@@ -154,7 +155,7 @@ function renderSections(config) {
     });
 
     linksBySection.forEach((links, section) => {
-        if (!links.length) {
+        if (!links.length || hiddenSections.has(section)) {
             return;
         }
         const sectionEl = document.createElement("div");
@@ -187,9 +188,25 @@ function renderSections(config) {
         handle.draggable = isRearranging;
         handle.textContent = "Drag to reorder";
 
+        const hide = document.createElement("button");
+        hide.type = "button";
+        hide.className = "section-hide";
+        hide.dataset.action = "toggle-section-hidden";
+        hide.dataset.section = section;
+        hide.textContent = "Hide";
+
+        const openAll = document.createElement("button");
+        openAll.type = "button";
+        openAll.className = "section-open-all";
+        openAll.dataset.action = "open-all-links";
+        openAll.dataset.section = section;
+        openAll.textContent = "Open all";
+
         headerActions.appendChild(collapse);
+        headerActions.appendChild(hide);
         headerActions.appendChild(handle);
         header.appendChild(heading);
+        header.appendChild(openAll);
         header.appendChild(headerActions);
         sectionEl.appendChild(header);
 

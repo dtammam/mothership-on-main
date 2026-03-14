@@ -1,3 +1,5 @@
 dist/
 node_modules/
 *.code-workspace
+test-results/
+playwright-report/

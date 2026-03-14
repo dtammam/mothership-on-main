@@ -63,8 +63,14 @@ jobs:
             - name: Check formatting
               run: npm run format:check
 
-            - name: Run tests
+            - name: Run unit tests
               run: npm test
+
+            - name: Install Playwright browsers
+              run: npx playwright install chromium --with-deps
+
+            - name: Run E2E tests
+              run: xvfb-run npx playwright test --reporter=line
 
     # Package and release (skipped for docs-only changes)
     build-packages:

@@ -41,6 +41,23 @@ async function init() {
 
     // Reveal page now that user config is rendered (prevents FOUC).
     document.body.classList.remove("loading");
+
+    // Show extension name and version from manifest (indicates prod vs QA build).
+    renderVersionLabel();
+}
+
+// Reads manifest.json and populates the version label in the settings footer.
+async function renderVersionLabel() {
+    try {
+        const res = await fetch("manifest.json");
+        const manifest = await res.json();
+        const label = document.getElementById("version-label");
+        if (label && manifest.name && manifest.version) {
+            label.textContent = `${manifest.name} v${manifest.version}`;
+        }
+    } catch (error) {
+        console.error("Failed to load manifest for version label", error);
+    }
 }
 
 window.mothershipDebug = {

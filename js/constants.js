@@ -40,5 +40,6 @@ const fallbackConfig = {
     visibility: { search: true, quotes: true, links: true },
     privacy: { autoFetchFavicons: true },
     collapsedSections: [],
+    hiddenSections: [],
     search: { defaultEngine: "google", engines: [] }
 };
