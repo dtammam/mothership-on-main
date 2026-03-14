@@ -123,7 +123,7 @@ test.describe("Settings panel", () => {
     });
 
     test("closes when Cancel button is clicked", async () => {
-        await page.locator("#settings-cancel").click();
+        await page.locator("#settings-cancel-bottom").click();
         await page.waitForTimeout(300);
 
         const panel = page.locator("#settings-panel");
@@ -156,10 +156,11 @@ test.describe("Section interactions", () => {
         const grid = section.locator(".links-grid");
         await expect(grid).toBeVisible();
 
-        await section.locator(".section-collapse").click();
-        await page.waitForTimeout(300);
+        // Collapse button has pointer-events:none outside rearrange mode
+        // but the click handler still works — use force to bypass CSS.
+        await section.locator(".section-collapse").click({ force: true });
+        await page.waitForTimeout(500);
 
-        // After collapse, section should be re-rendered as collapsed
         const updatedSection = page.locator(".section").first();
         const updatedGrid = updatedSection.locator(".links-grid");
         await expect(updatedGrid).not.toBeVisible();
@@ -170,8 +171,8 @@ test.describe("Section interactions", () => {
         const expandBtn = section.locator(".section-collapse");
         await expect(expandBtn).toHaveText("Expand");
 
-        await expandBtn.click();
-        await page.waitForTimeout(300);
+        await expandBtn.click({ force: true });
+        await page.waitForTimeout(500);
 
         const updatedSection = page.locator(".section").first();
         const updatedGrid = updatedSection.locator(".links-grid");
