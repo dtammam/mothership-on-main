@@ -28,6 +28,13 @@ async function launchExtension() {
         timeout: 10000
     });
 
+    // Dismiss the "What's New" dialog if it appeared (shows on fresh installs).
+    const overlay = page.locator(".whats-new-overlay");
+    if (await overlay.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await page.locator(".whats-new-got-it").click();
+        await overlay.waitFor({ state: "detached", timeout: 2000 });
+    }
+
     return { context, page };
 }
 
