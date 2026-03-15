@@ -9,7 +9,17 @@ import { createDocumentMock } from "./dom-mock.js";
 
 // Load module files in dependency order (concatenated for VM sandbox)
 const jsDir = resolve(import.meta.dirname, "../../js");
-const moduleFiles = ["constants.js", "utils.js", "storage.js", "config.js", "render.js", "customize.js", "init.js"];
+const moduleFiles = [
+    "constants.js",
+    "utils.js",
+    "storage.js",
+    "config.js",
+    "render.js",
+    "customize.js",
+    "whats-new-content.js",
+    "whats-new.js",
+    "init.js"
+];
 const scriptSource = moduleFiles.map((f) => readFileSync(resolve(jsDir, f), "utf-8")).join("\n");
 
 export function loadScript(options = {}) {
