@@ -113,6 +113,7 @@ Active plans currently in progress:
 
 Completed plans:
 
+- `2026-03-15-whats-new.md` — "What's New" dialog: one-time post-upgrade modal with release highlights, settings footer link, accordion for past versions
 - `2026-03-14-feature-batch.md` — 7 features: bookmark import, CI hooks + Playwright, open-all-links, collapse without rearrange, section select bug fix, true section hiding, version label (v1.5.0)
 - `2026-03-13-module-split.md` — split monolithic script.js into 7 focused modules (tech debt #1)
 - `2026-03-13-dom-test-coverage.md` — DOM rendering tests, all C domains upgraded to A

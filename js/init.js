@@ -44,6 +44,9 @@ async function init() {
 
     // Show extension name and version from manifest (indicates prod vs QA build).
     renderVersionLabel();
+
+    // Show "What's New" dialog if the user hasn't seen this version yet.
+    checkWhatsNew();
 }
 
 // Reads manifest.json and populates the version label in the settings footer.
@@ -53,7 +56,14 @@ async function renderVersionLabel() {
         const manifest = await res.json();
         const label = document.getElementById("version-label");
         if (label && manifest.name && manifest.version) {
-            label.textContent = `${manifest.name} v${manifest.version}`;
+            label.textContent = `${manifest.name} v${manifest.version} `;
+
+            const whatsNewLink = document.createElement("button");
+            whatsNewLink.className = "whats-new-btn";
+            whatsNewLink.type = "button";
+            whatsNewLink.textContent = "(See what's new)";
+            whatsNewLink.addEventListener("click", openWhatsNew);
+            label.appendChild(whatsNewLink);
         }
     } catch (error) {
         console.error("Failed to load manifest for version label", error);

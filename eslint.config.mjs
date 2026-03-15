@@ -61,6 +61,7 @@ export default [
                 V2_CHUNK_PREFIX: "readonly",
                 V2_TMP_META_KEY: "readonly",
                 V2_TMP_CHUNK_PREFIX: "readonly",
+                WHATS_NEW_LAST_SEEN_KEY: "readonly",
                 fallbackConfig: "readonly",
                 // utils.js
                 hashString: "readonly",
@@ -192,6 +193,14 @@ export default [
                 setAuraPalette: "readonly",
                 sampleDominantColor: "readonly",
                 collectFaviconSources: "readonly",
+                // whats-new-content.js
+                WHATS_NEW_RELEASES: "readonly",
+                // whats-new.js
+                checkWhatsNew: "readonly",
+                openWhatsNew: "readonly",
+                getManifestVersion: "readonly",
+                showWhatsNewDialog: "readonly",
+                dismissWhatsNew: "readonly",
                 // init.js globals (mutable shared state, will be extracted in phase 7)
                 activeConfig: "writable",
                 faviconCache: "writable",
@@ -232,6 +241,8 @@ export default [
             "js/config.js",
             "js/render.js",
             "js/customize.js",
+            "js/whats-new-content.js",
+            "js/whats-new.js",
             "js/init.js"
         ],
         rules: {

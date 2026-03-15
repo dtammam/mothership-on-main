@@ -24,6 +24,7 @@ const V2_META_KEY = "msom:cfg:v2:meta";
 const V2_CHUNK_PREFIX = "msom:cfg:v2:chunk:";
 const V2_TMP_META_KEY = "msom:cfg:v2:tmp:meta";
 const V2_TMP_CHUNK_PREFIX = "msom:cfg:v2:tmp:chunk:";
+const WHATS_NEW_LAST_SEEN_KEY = "msom:whatsNewLastSeen";
 
 const fallbackConfig = {
     branding: {
