@@ -3,17 +3,120 @@
 This file is the Claude Code entry point for this repo. It is intentionally thin.
 The real sources of truth live in `docs/`. Read them, not this file.
 
+## What YOU (the main session) do
+
+You are NOT any of the agents listed below. You are the user's interface.
+Your only job is to:
+
+1. Receive the user's request
+2. Invoke the engineering-manager agent via the Agent tool
+3. Relay the engineering-manager's output — including its routing instructions — verbatim to the user
+
+Do NOT roleplay as the engineering-manager. Do NOT directly invoke
+product-manager, principal-engineer, software-developer, or any other
+agent. Always go through engineering-manager.
+
+If you catch yourself coordinating the pipeline, reading state files,
+or delegating to specialist agents directly — STOP. Invoke the EM instead.
+
+## Agent architecture
+
+The engineering-manager is an **advisor and state manager**, not a delegator.
+It writes the specialist prompt to `.state/inbox/<agent-name>.md` and tells the
+user which VS Code task to run. The user launches each specialist via
+**Terminal -> Run Task...** in VS Code, which spawns a fresh Claude Code session
+that reads the inbox file automatically. This keeps every agent's output directly
+visible to the user — no intermediary summaries, no copy-paste.
+
+### Agents (`.claude/agents/`)
+
+| Agent                 | What it does                                                                                  | How to run it                                           |
+| --------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `engineering-manager` | Tracks feature state, routes work to specialists, manages stage transitions                   | Invoked automatically by `/commands`                    |
+| `product-manager`     | Gathers requirements + acceptance criteria (Discovery), validates delivered work (Acceptance) | VS Code task **"Run Product Manager"** or `/run-pm`     |
+| `principal-engineer`  | Reads requirements and codebase, produces technical design with approach, risks, alternatives | VS Code task **"Run Principal Engineer"** or `/run-pe`  |
+| `software-developer`  | Implements ONE task at a time — writes code, tests, runs quality checks                       | VS Code task **"Run Software Developer"** or `/run-sde` |
+| `build-specialist`    | Runs build + test + lint + format checks, reports pass/fail (never fixes code)                | VS Code task **"Run Build Specialist"** or `/run-build` |
+| `quality-assurance`   | Reviews code for correctness, security, performance, standards compliance (never fixes code)  | VS Code task **"Run Quality Assurance"** or `/run-qa`   |
+
+### Commands (`.claude/commands/`)
+
+Each command moves the feature one stage forward. Run them in order.
+
+| Command                | What it does                                                                 | Then you do                                                      |
+| ---------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| **`/kickoff`**         | Initializes state, reads project context, summarizes starting point          | Review summary -> **`/discover`**                                |
+| **`/discover`**        | Routes to PM to gather requirements and write exec plan                      | Run task **"Run Product Manager"** -> **`/design`**              |
+| **`/design`**          | Routes to PE to produce technical design in exec plan                        | Run task **"Run Principal Engineer"** -> **`/tasks`**            |
+| **`/tasks`**           | EM breaks design into small, testable tasks with definitions of done         | Review tasks -> **`/implement`**                                 |
+| **`/implement`**       | Routes ONE task to SDE for implementation                                    | Run task **"Run Software Developer"** -> repeat or **`/verify`** |
+| **`/verify`**          | Routes to build specialist to run all quality gates                          | Run task **"Run Build Specialist"** -> **`/accept`**             |
+| **`/review`**          | Routes to QA for code review (optional, recommended for non-trivial changes) | Run task **"Run Quality Assurance"** -> fix or proceed           |
+| **`/accept`**          | Routes to PM to validate every acceptance criterion                          | Run task **"Run Product Manager"** -> **`/done`**                |
+| **`/done`**            | Archives plan, commits, pushes, creates PR, offers release tagging           | Merge PR -> **`/kickoff`** for next feature                      |
+| **`/commit-only`**     | Stages and commits (no push)                                                 | --                                                               |
+| **`/commit-and-push`** | Stages, commits, pushes                                                      | --                                                               |
+
+### VS Code tasks (`.vscode/tasks.json`)
+
+Each specialist agent has a corresponding VS Code task that spawns a fresh
+Claude Code session reading from `.state/inbox/<agent-name>.md`. Run via
+**Terminal -> Run Task...** in VS Code.
+
+### Mobile workflow (Session 2)
+
+For environments without VS Code (e.g. mobile CLI), specialist agents
+can be invoked via shell scripts or slash commands instead of VS Code tasks.
+
+**Two-session model:**
+
+- **Session 1 (EM):** Uses existing slash commands (`/kickoff`, `/discover`, etc.) — unchanged.
+- **Session 2 (Specialist workbench):** Runs specialist agents via `/run-*` commands.
+
+| Slash command | Shell script                        | Equivalent VS Code task |
+| ------------- | ----------------------------------- | ----------------------- |
+| `/run-pm`     | `scripts/run-product-manager.sh`    | Run Product Manager     |
+| `/run-pe`     | `scripts/run-principal-engineer.sh` | Run Principal Engineer  |
+| `/run-sde`    | `scripts/run-software-developer.sh` | Run Software Developer  |
+| `/run-build`  | `scripts/run-build-specialist.sh`   | Run Build Specialist    |
+| `/run-qa`     | `scripts/run-quality-assurance.sh`  | Run Quality Assurance   |
+
+Each script verifies the inbox file exists and is non-empty before invoking
+`claude --agent <name> @.state/inbox/<name>.md`. If the inbox is missing,
+it means the EM hasn't routed work yet — run the appropriate command in Session 1 first.
+
+### Shared state
+
+`.state/feature-state.json` tracks the current feature lifecycle. The
+engineering-manager reads and updates it at every stage transition.
+
+`.state/inbox/` holds ephemeral prompt files written by the EM for specialist
+agents. These are `.gitignore`d — only `.gitkeep` is tracked.
+
+### Workflow
+
+```text
+/kickoff -> /discover -> /design -> /tasks -> /implement -> /verify -> /accept -> /done
+                                                ↑            |
+                                                └── (next) ──┘
+
+Optional at any point: /review (code review)
+```
+
+Every stage transition requires explicit user approval. No auto-progression.
+The user runs each command manually. The engineering-manager runs ONE stage
+per invocation and stops.
+
 ## Session protocol
 
 Every conversation follows this sequence. No exceptions.
 
 ### On start (before writing any code)
 
-1. Read the SessionStart hook output (branch, active plans, tech debt count).
-2. Read `docs/index.md` → `docs/CONTRIBUTING.md` (design principles + coding standards).
-3. If active exec plans exist, read them. Understand what's in progress before starting new work.
-4. If the user's request overlaps with an active plan or tech debt item, say so.
-5. For new work: use `/kickoff` (simple) or `/kickoff-complex` (multi-domain). Do not start coding without a brief or plan.
+1. Read `docs/index.md` → `docs/CONTRIBUTING.md` (design principles + coding standards).
+2. If active exec plans exist, read them. Understand what's in progress before starting new work.
+3. If the user's request overlaps with an active plan or tech debt item, say so.
+4. For new work: use `/kickoff`. Do not start coding without a brief or plan.
 
 ### During work
 
@@ -36,7 +139,6 @@ Read these before touching any code:
 2. `docs/ARCHITECTURE.md` — system design, data model, repo layout
 3. `docs/RELIABILITY.md` — performance budgets and invariants (treat as non-negotiable)
 4. `docs/CONTRIBUTING.md` — design principles and coding standards
-5. `docs/PLANS.md` — when and how to write execution plans
 
 For active work in progress: `docs/exec-plans/active/`
 For tech debt: `docs/exec-plans/tech-debt-tracker.md`
@@ -76,7 +178,6 @@ Make the change, update exactly one doc if behavior changed, write a test.
 Write an execution plan first:
 
 - Create `docs/exec-plans/active/<yyyy-mm-dd>-<short-title>.md`
-- Use the template in `docs/PLANS.md`
 - Do not write significant code until the plan is in place
 
 ### Change hygiene
@@ -89,8 +190,8 @@ When behavior changes, update exactly one of:
 
 ## Quality gates (do not bypass)
 
-- `pre-commit`: JSON validation (config.json, manifest.json), basic JS syntax check
-- `pre-push`: full quality gate (once test runner is implemented)
+- `pre-commit`: JSON validation (config.json, manifest.json), JS syntax check, lint, format check, unit tests
+- `pre-push`: full quality gate (lint, format, unit tests, E2E tests)
 - Never use `--no-verify`. If a hook fails, fix the root cause.
 
 ## Commands
@@ -98,6 +199,18 @@ When behavior changes, update exactly one of:
 Prefer repo scripts over ad-hoc commands.
 
 ```
+# Lint
+npx eslint js/ tests/ --no-error-on-unmatched-pattern
+
+# Format check
+npx prettier --check "**/*.{js,json,md,yml,yaml,css,html}"
+
+# Unit tests
+npx vitest run
+
+# E2E tests
+npx playwright test --reporter=line
+
 # Load as unpacked extension in Edge/Chrome for manual testing
 # Run storage harness: open tests/storage-harness.html in extension context
 

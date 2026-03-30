@@ -1,38 +1,34 @@
-# Kickoff
+# Start here. Bootstraps a new feature into the agent pipeline.
 
-Create a concise execution brief before starting implementation on a simple, single-domain change.
+Tell the system what you want to build — it initializes state, reads project context, and prepares for requirements gathering.
 
-Use for: small features, bug fixes, targeted refactors, doc updates.
-Use `kickoff-complex` instead when work spans multiple domains or has non-obvious tradeoffs.
+## Input
 
-## Workflow
+$ARGUMENTS should be a brief description of the feature or change.
+If empty, ask the user what they want to build.
 
-1. **Check existing context first.** Before asking the user anything:
-    - Read `docs/exec-plans/active/` — if an active plan relates to the request, surface it.
-    - Read `docs/exec-plans/tech-debt-tracker.md` — if a debt item matches, reference it.
-    - Read `docs/CONTRIBUTING.md` — confirm the design principles that apply.
-    - If the request is already covered by an existing plan, say so and skip to step 5.
+## Procedure
 
-2. Ask the user to fill this template:
+1. Invoke the engineering-manager agent with this instruction:
 
-    Goal:
-    Scope:
-    Constraints:
-    Authoritative docs:
-    Deliverables:
+    "The user wants to start a new feature: [$ARGUMENTS]. Run the Bootstrap
+    stage ONLY. Initialize the state file, read existing context, summarize
+    the starting state, and stop. Do NOT proceed to Discovery or any other
+    stage. Output what you did and ask if the user is ready to move to
+    Discovery."
 
-3. Keep the ask short and explicit. Do not add implementation details or suggest solutions.
+2. Relay the engineering-manager's output to the user.
 
-4. Check for missing or vague fields. Ask one concise follow-up listing only what's missing.
+---
 
-5. Normalize the user input into an Execution Brief using the same five headings.
+## Next step
 
-6. Start implementation only after the brief is complete and confirmed.
+Review the summary. When ready, run **`/discover`** to start requirements gathering.
+
+---
 
 ## Rules
 
-- Prefer reference pointers over long prose.
-- Preserve user wording where possible.
-- Suggest defaults only when the user leaves a field blank.
-- Do not propose solutions or design choices during kickoff.
-- When work is complete, follow the session protocol closing steps in CLAUDE.md.
+- ONE stage only. Do not chain into Discovery.
+- If `.state/feature-state.json` already has an active feature, the EM should
+  warn about this and ask whether to archive it or continue it.
