@@ -9,8 +9,6 @@ Start here, then follow links.
 - Contributing & software design principles: `CONTRIBUTING.md`
 - Architecture: `ARCHITECTURE.md`
 - Reliability & performance budgets: `RELIABILITY.md`
-- Plans & execution artifacts: `PLANS.md`
-- Quality grading by domain: `QUALITY_SCORE.md`
 
 ## Execution plans
 
@@ -18,9 +16,10 @@ Start here, then follow links.
 - Completed plans: `exec-plans/completed/`
 - Tech debt tracker: `exec-plans/tech-debt-tracker.md`
 
-## References
+## Agent architecture
 
-- Historical agent guidance (archived): `references/AGENTS.md`
+Agent definitions live in `.claude/agents/`. See `CLAUDE.md` for the agent
+table, command reference, and workflow diagram.
 
 ## Other project docs (root level)
 
