@@ -22,17 +22,17 @@ These apply to every change. They are not aspirational — they are the standard
 
 Build/test/lint commands live in `package.json` scripts — run them with `npm run <name>`:
 
-| Command                    | What it does                                  |
-| -------------------------- | --------------------------------------------- |
-| `npm run lint`             | ESLint over `js/` and `tests/`                |
-| `npm run lint:fix`         | ESLint with `--fix`                           |
-| `npm run format:check`     | Prettier check (js, json, md, yml, css, html) |
-| `npm run format`           | Prettier write                                |
-| `npm test`                 | Vitest unit run (`vitest run`)                |
-| `npm run test:watch`       | Vitest in watch mode                          |
-| `npm run test:coverage`    | Vitest with coverage                          |
-| `npm run test:e2e`         | Playwright E2E (`playwright test`)            |
-| `npm run test:e2e:install` | Install the Playwright Chromium browser       |
+| Command                    | What it does                                        |
+| -------------------------- | --------------------------------------------------- |
+| `npm run lint`             | ESLint over `js/` and `tests/`                      |
+| `npm run lint:fix`         | ESLint with `--fix`                                 |
+| `npm run format:check`     | Prettier check (js, json, md, yml, yaml, css, html) |
+| `npm run format`           | Prettier write                                      |
+| `npm test`                 | Vitest unit run (`vitest run`)                      |
+| `npm run test:watch`       | Vitest in watch mode                                |
+| `npm run test:coverage`    | Vitest with coverage                                |
+| `npm run test:e2e`         | Playwright E2E (`playwright test`)                  |
+| `npm run test:e2e:install` | Install the Playwright Chromium browser             |
 
 Report failures verbatim, with counts — "verified" is not "should work".
 
