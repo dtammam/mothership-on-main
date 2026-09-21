@@ -2,7 +2,7 @@
 
 ---
 
-status: In review
+status: Shipped v2.3.0
 anchor: outcome
 gate: APPROVED @572ea2f
 branch: infra/handoff-harness-v2
