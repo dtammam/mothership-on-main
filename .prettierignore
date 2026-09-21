@@ -4,3 +4,11 @@ dist/
 *.code-workspace
 test-results/
 playwright-report/
+
+# Externally-managed handoff-harness files (installed/updated by the harness,
+# not authored to this repo's prettier config). AGENTS.md / CLAUDE.md carry
+# harness region-marker comments prettier cannot format idempotently.
+.harness/
+.claude/
+AGENTS.md
+CLAUDE.md
